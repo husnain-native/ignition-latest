@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027004493556",
+    "project_id": "ignition-28a67",
+    "storage_bucket": "ignition-28a67.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027004493556:android:f32a8fde1e2c7fc7a1b8a1",
+        "android_client_info": {
+          "package_name": "com.example.ignition"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAm-_69EMGm_jMxQTijJgPegFZRXE9Yj00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

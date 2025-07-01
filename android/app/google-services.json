@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "547209522948",
+    "project_id": "ignition-new",
+    "storage_bucket": "ignition-new.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547209522948:android:432c773cad57ba856f6a51",
+        "android_client_info": {
+          "package_name": "com.example.ignition_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjwhe_6JMNV8l5m9LRKV7wpkV-O4zwEqM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
