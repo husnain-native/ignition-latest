@@ -100,9 +100,12 @@ class SpaceService {
               .equalTo(spaceId)
               .get();
 
-      if (!snapshot.exists) return allSlots;
+      if (!snapshot.exists || snapshot.value == null) return allSlots;
 
-      final bookings = snapshot.value as Map<dynamic, dynamic>;
+      final bookingsRaw = snapshot.value;
+      if (bookingsRaw is! Map) return allSlots;
+
+      final bookings = bookingsRaw as Map<dynamic, dynamic>;
       final bookedSlots =
           bookings.values
               .where((booking) {

@@ -131,10 +131,7 @@ class _SpaceDetailsScreenState extends State<SpaceDetailsScreen> {
             expandedHeight: 300.h,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: Image.network(
-                widget.space.imageUrl,
-                fit: BoxFit.cover,
-              ),
+              background: Image.asset(widget.space.imageUrl, fit: BoxFit.contain),
             ),
             backgroundColor: AppColors.primary,
           ),

@@ -14,7 +14,6 @@ class AppRoutes {
     AppConstants.loginRoute: (context) => const LoginScreen(),
     AppConstants.signupRoute: (context) => const SignupScreen(),
     AppConstants.homeRoute: (context) => const HomeScreen(),
-    AppConstants.bookingRoute: (context) => const BookingScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {

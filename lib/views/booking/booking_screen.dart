@@ -8,7 +8,8 @@ import '../../services/shared_prefs_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BookingScreen extends StatefulWidget {
-  const BookingScreen({super.key});
+  final String branchName;
+  const BookingScreen({super.key, required this.branchName});
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
@@ -182,49 +183,18 @@ class _BookingScreenState extends State<BookingScreen> {
       backgroundColor: AppColors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4.r,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            title: Row(
-              children: [
-                Image.asset('assets/icons/ignition.jpeg', height: 32.h),
-                const SizedBox(width: 12),
-                Text(
-                  'IGNITION COWORKING SPACE',
-                  style: AppTextStyles.h3.copyWith(
-                    color: AppColors.text,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
+        child: AppBar(
+          backgroundColor: const Color.fromARGB(255, 21, 71, 9),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          title: Text(
+            widget.branchName,
+            style: AppTextStyles.h3.copyWith(
+              color: const Color.fromARGB(255, 255, 255, 255),
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
             ),
-            actions: [
-              if (_userEmail != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: TextButton.icon(
-                    icon: Icon(Icons.person_outline, color: AppColors.text),
-                    label: Text(
-                      _userEmail!,
-                      style: AppTextStyles.body2.copyWith(
-                        color: AppColors.text,
-                      ),
-                    ),
-                    onPressed: _handleLogout,
-                  ),
-                ),
-            ],
           ),
         ),
       ),
