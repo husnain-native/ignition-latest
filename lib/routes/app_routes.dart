@@ -7,21 +7,29 @@ import '../views/home/home_screen.dart';
 import '../views/booking/booking_screen.dart';
 import '../views/booking/space_details_screen.dart';
 import '../models/space_model.dart';
+import '../views/branch_selection_screen.dart';
+import '../views/admin/admin_panel_screen.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
     AppConstants.splashRoute: (context) => const SplashScreen(),
     AppConstants.loginRoute: (context) => const LoginScreen(),
     AppConstants.signupRoute: (context) => const SignupScreen(),
-    AppConstants.homeRoute: (context) => const HomeScreen(),
+    '/branch-selection': (context) => const BranchSelectionScreen(),
+    '/admin-panel': (context) => const AdminPanelScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
-    // Handle unknown routes or dynamic routes here
     if (settings.name == AppConstants.spaceDetailsRoute) {
       final space = settings.arguments as SpaceModel;
       return MaterialPageRoute(
         builder: (_) => SpaceDetailsScreen(space: space),
+      );
+    }
+    if (settings.name == AppConstants.homeRoute) {
+      final branchName = settings.arguments as String;
+      return MaterialPageRoute(
+        builder: (_) => HomeScreen(branchName: branchName),
       );
     }
     return MaterialPageRoute(

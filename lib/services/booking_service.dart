@@ -1,10 +1,12 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:hive/hive.dart';
 
 import '../models/booking_model.dart';
 import '../constants/app_constants.dart';
 
 class BookingService {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  static const String bookingsBoxName = 'bookingsBox';
 
   // Create a new booking
   Future<BookingModel> createBooking(BookingModel booking) async {
@@ -106,6 +108,59 @@ class BookingService {
     } catch (e) {
       print('Error fetching booking: $e');
       return null;
+    }
+  }
+
+  // Create a new booking request
+  Future<void> createBookingRequest(BookingRequest booking) async {
+    final box = await Hive.openBox<BookingRequest>(bookingsBoxName);
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final bookingWithId = BookingRequest(
+      id: id,
+      userId: booking.userId,
+      userName: booking.userName,
+      email: booking.email,
+      phone: booking.phone,
+      branch: booking.branch,
+      date: booking.date,
+      timeSlot: booking.timeSlot,
+      status: booking.status,
+    );
+    await box.put(id, bookingWithId);
+  }
+
+  // Fetch all booking requests (for admin)
+  Future<List<BookingRequest>> getAllBookingRequests() async {
+    final box = await Hive.openBox<BookingRequest>(bookingsBoxName);
+    return box.values.toList();
+  }
+
+  // Fetch booking requests for a specific user
+  Future<List<BookingRequest>> getUserBookingRequests(String userId) async {
+    final box = await Hive.openBox<BookingRequest>(bookingsBoxName);
+    return box.values.where((b) => b.userId == userId).toList();
+  }
+
+  // Update booking request status (accept/deny)
+  Future<void> updateBookingRequestStatus(
+    String bookingId,
+    String status,
+  ) async {
+    final box = await Hive.openBox<BookingRequest>(bookingsBoxName);
+    final booking = box.get(bookingId);
+    if (booking != null) {
+      final updated = BookingRequest(
+        id: booking.id,
+        userId: booking.userId,
+        userName: booking.userName,
+        email: booking.email,
+        phone: booking.phone,
+        branch: booking.branch,
+        date: booking.date,
+        timeSlot: booking.timeSlot,
+        status: status,
+      );
+      await box.put(bookingId, updated);
     }
   }
 }

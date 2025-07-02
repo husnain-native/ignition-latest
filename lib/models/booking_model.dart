@@ -1,3 +1,6 @@
+import 'package:hive/hive.dart';
+part 'booking_model.g.dart';
+
 class BookingModel {
   final String id;
   final String userId;
@@ -50,4 +53,65 @@ class BookingModel {
   }
 
   Duration get duration => endTime.difference(startTime);
+}
+
+@HiveType(typeId: 1)
+class BookingRequest {
+  @HiveField(0)
+  final String id;
+  @HiveField(1)
+  final String userId;
+  @HiveField(2)
+  final String userName;
+  @HiveField(3)
+  final String email;
+  @HiveField(4)
+  final String phone;
+  @HiveField(5)
+  final String branch;
+  @HiveField(6)
+  final String date;
+  @HiveField(7)
+  final String timeSlot;
+  @HiveField(8)
+  final String status; // pending, accepted, denied
+
+  BookingRequest({
+    required this.id,
+    required this.userId,
+    required this.userName,
+    required this.email,
+    required this.phone,
+    required this.branch,
+    required this.date,
+    required this.timeSlot,
+    required this.status,
+  });
+
+  factory BookingRequest.fromMap(Map<String, dynamic> map, String id) {
+    return BookingRequest(
+      id: id,
+      userId: map['userId'] ?? '',
+      userName: map['userName'] ?? '',
+      email: map['email'] ?? '',
+      phone: map['phone'] ?? '',
+      branch: map['branch'] ?? '',
+      date: map['date'] ?? '',
+      timeSlot: map['timeSlot'] ?? '',
+      status: map['status'] ?? 'pending',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'userName': userName,
+      'email': email,
+      'phone': phone,
+      'branch': branch,
+      'date': date,
+      'timeSlot': timeSlot,
+      'status': status,
+    };
+  }
 }

@@ -23,8 +23,8 @@ class AppColors {
   // Status Colors
   static const Color success = Color(0xFF00C853); // Green
   static const Color error = Color(0xFFFF3D00); // Red
-  static const Color warning = Color(0xFFFFB800); // Using our Yellow
-  static const Color info = Color(0xFF0055FF); // Using our Blue
+  static const Color warning = Color.fromARGB(255, 255, 230, 0); // Using our Yellow
+  static const Color info = Color.fromARGB(255, 3, 25, 70); // Using our Blue
 
   // Other Colors
   static const Color divider = Color(0xFFE0E0E0);

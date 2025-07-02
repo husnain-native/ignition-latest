@@ -7,6 +7,7 @@ import '../../view_models/auth_view_model.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../admin/admin_panel_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,42 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
       final authViewModel = context.read<AuthViewModel>();
-      await authViewModel.signIn(
+      final success = await authViewModel.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
-      if (mounted) {
-        if (authViewModel.status == AuthStatus.loading) {
-          // Show loading indicator
-        } else if (authViewModel.status == AuthStatus.authenticated) {
-          Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
-        } else if (authViewModel.status == AuthStatus.error) {
-          print('Login Screen Error: ${authViewModel.error}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.white),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      authViewModel.error!,
-                      style: AppTextStyles.body2.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
+      if (success && mounted) {
+        Navigator.pushReplacementNamed(context, '/branch-selection');
       }
     }
   }
@@ -184,7 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account? ", style: AppTextStyles.body2),
+                    Text(
+                      "Don't have an account? ",
+                      style: TextStyle(fontSize: 12.sp),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, AppConstants.signupRoute);
@@ -193,11 +167,72 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Sign Up',
                         style: AppTextStyles.body2.copyWith(
                           color: AppColors.primary,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    String username = '';
+                    String password = '';
+                    bool? result = await showDialog<bool>(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Admin Login'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                decoration: InputDecoration(
+                                  labelText: 'Username',
+                                ),
+                                onChanged: (value) => username = value,
+                              ),
+                              TextField(
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                ),
+                                onChanged: (value) => password = value,
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    if (result == true &&
+                        username == 'admin' &&
+                        password == 'admin123') {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminPanelScreen(),
+                        ),
+                      );
+                    } else if (result == true) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Incorrect admin username or password'),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Admin'),
                 ),
               ],
             ),

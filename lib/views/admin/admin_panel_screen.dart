@@ -1,42 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/booking_service.dart';
 import '../../models/booking_model.dart';
-import '../../services/shared_prefs_service.dart';
 
-class BookingScreen extends StatefulWidget {
-  final String branchName;
-  const BookingScreen({super.key, required this.branchName});
+class AdminPanelScreen extends StatefulWidget {
+  const AdminPanelScreen({Key? key}) : super(key: key);
 
   @override
-  State<BookingScreen> createState() => _BookingScreenState();
+  State<AdminPanelScreen> createState() => _AdminPanelScreenState();
 }
 
-class _BookingScreenState extends State<BookingScreen> {
+class _AdminPanelScreenState extends State<AdminPanelScreen> {
   late Future<List<BookingRequest>> _futureBookings;
-  String? userId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserIdAndBookings();
+    _futureBookings = BookingService().getAllBookingRequests();
   }
 
-  Future<void> _loadUserIdAndBookings() async {
-    userId = await SharedPrefsService.getUserId();
+  Future<void> _updateStatus(String bookingId, String status) async {
+    await BookingService().updateBookingRequestStatus(bookingId, status);
     setState(() {
-      _futureBookings = BookingService().getUserBookingRequests(userId ?? '');
+      _futureBookings = BookingService().getAllBookingRequests();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-     
-     
+      appBar: AppBar(
+        backgroundColor: AppColors.info,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppColors.warning),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+        ),
+        title: Text(
+          'Admin Panel',
+          style: AppTextStyles.h2.copyWith(color: AppColors.warning),
+        ),
+      ),
       body: FutureBuilder<List<BookingRequest>>(
         future: _futureBookings,
         builder: (context, snapshot) {
@@ -44,11 +50,11 @@ class _BookingScreenState extends State<BookingScreen> {
             return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No bookings found.'));
+            return Center(child: Text('No booking requests.'));
           }
           final bookings = snapshot.data!;
           return ListView.builder(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(16),
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               final booking = bookings[index];
@@ -57,9 +63,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                margin: EdgeInsets.only(bottom: 20.h),
+                margin: EdgeInsets.only(bottom: 20),
                 child: Padding(
-                  padding: EdgeInsets.all(15.w),
+                  padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -113,6 +119,30 @@ class _BookingScreenState extends State<BookingScreen> {
                       SizedBox(height: 16),
                       Row(
                         children: [
+                          Icon(Icons.person, color: AppColors.info, size: 20),
+                          SizedBox(width: 8),
+                          Text(booking.userName, style: AppTextStyles.body1),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.email, color: AppColors.info, size: 20),
+                          SizedBox(width: 8),
+                          Text(booking.email, style: AppTextStyles.body1),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.phone, color: AppColors.info, size: 20),
+                          SizedBox(width: 8),
+                          Text(booking.phone, style: AppTextStyles.body1),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
                           Icon(
                             Icons.calendar_today,
                             color: AppColors.warning,
@@ -130,6 +160,44 @@ class _BookingScreenState extends State<BookingScreen> {
                           Text(booking.timeSlot, style: AppTextStyles.body1),
                         ],
                       ),
+                      if (booking.status == 'pending') ...[
+                        SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    () => _updateStatus(booking.id, 'accepted'),
+                                icon: Icon(Icons.check, color: Colors.white),
+                                label: Text('Accept'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    () => _updateStatus(booking.id, 'denied'),
+                                icon: Icon(Icons.close, color: Colors.white),
+                                label: Text('Deny'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

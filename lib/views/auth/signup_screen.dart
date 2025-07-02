@@ -7,6 +7,7 @@ import '../../view_models/auth_view_model.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../admin/admin_panel_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -50,27 +51,14 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleSignup() async {
     if (_formKey.currentState?.validate() ?? false) {
       final authViewModel = context.read<AuthViewModel>();
-      await authViewModel.signUp(
+      final success = await authViewModel.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         fullName: _fullNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
       );
-
-      if (mounted) {
-        if (authViewModel.status == AuthStatus.loading) {
-          // Show loading indicator
-        } else if (authViewModel.status == AuthStatus.authenticated) {
-          Navigator.pushReplacementNamed(context, AppConstants.homeRoute);
-        } else if (authViewModel.status == AuthStatus.error) {
-          print('Signup Screen Error: ${authViewModel.error}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authViewModel.error ?? 'An error occurred'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (success && mounted) {
+        Navigator.pushReplacementNamed(context, '/branch-selection');
       }
     }
   }
@@ -231,7 +219,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   children: [
                     Text(
                       'Already have an account? ',
-                      style: AppTextStyles.body2,
+                      style: TextStyle(fontSize: 12.sp),
                     ),
                     TextButton(
                       onPressed: () {
@@ -244,11 +232,72 @@ class _SignupScreenState extends State<SignupScreen> {
                         'Sign In',
                         style: AppTextStyles.body2.copyWith(
                           color: AppColors.primary,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    String username = '';
+                    String password = '';
+                    bool? result = await showDialog<bool>(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Admin Login'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                decoration: InputDecoration(
+                                  labelText: 'Username',
+                                ),
+                                onChanged: (value) => username = value,
+                              ),
+                              TextField(
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                ),
+                                onChanged: (value) => password = value,
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    if (result == true &&
+                        username == 'admin' &&
+                        password == 'admin123') {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminPanelScreen(),
+                        ),
+                      );
+                    } else if (result == true) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Incorrect admin username or password'),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Admin'),
                 ),
               ],
             ),

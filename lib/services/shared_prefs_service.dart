@@ -5,6 +5,7 @@ class SharedPrefsService {
   static const String _userIdKey = 'user_id';
   static const String _userNameKey = 'user_name';
   static const String _isLoggedInKey = 'is_logged_in';
+  static const String _userPhoneKey = 'user_phone';
 
   static Future<void> saveUserSession({
     required String email,
@@ -36,6 +37,11 @@ class SharedPrefsService {
   static Future<String?> getUserName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_userNameKey);
+  }
+
+  static Future<String?> getUserPhone() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userPhoneKey);
   }
 
   static Future<void> clearSession() async {
