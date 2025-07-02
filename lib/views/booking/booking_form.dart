@@ -21,6 +21,7 @@ class _BookingFormState extends State<BookingForm> {
   String? email;
   String? phone;
   bool isLoading = false;
+  List<String> bookedSlotsForDate = [];
 
   List<String> get timeSlots {
     List<String> slots = [];
@@ -49,7 +50,25 @@ class _BookingFormState extends State<BookingForm> {
         selectedDate = picked;
         selectedTimeSlot = null;
       });
+      await _fetchBookedSlotsForDate(picked);
     }
+  }
+
+  Future<void> _fetchBookedSlotsForDate(DateTime date) async {
+    final allBookings = await BookingService().getAllBookingRequests();
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    setState(() {
+      bookedSlotsForDate =
+          allBookings
+              .where(
+                (b) =>
+                    b.date == dateStr &&
+                    b.branch == widget.branchName &&
+                    (b.status == 'accepted' || b.status == 'pending'),
+              )
+              .map((b) => b.timeSlot)
+              .toList();
+    });
   }
 
   Future<void> _loadUserInfo() async {
@@ -63,6 +82,9 @@ class _BookingFormState extends State<BookingForm> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    if (selectedDate != null) {
+      _fetchBookedSlotsForDate(selectedDate!);
+    }
   }
 
   Future<void> _submitBooking() async {
@@ -97,6 +119,9 @@ class _BookingFormState extends State<BookingForm> {
         selectedDate = null;
         selectedTimeSlot = null;
       });
+      if (selectedDate != null) {
+        await _fetchBookedSlotsForDate(selectedDate!);
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Request successfully sent')));
@@ -150,25 +175,72 @@ class _BookingFormState extends State<BookingForm> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-                Wrap(
-                  spacing: 8.w,
-                  runSpacing: 8.h,
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  childAspectRatio: 3.5,
+                  mainAxisSpacing: 8.h,
+                  crossAxisSpacing: 2.w,
                   children:
                       timeSlots.map((slot) {
+                        // Disable if already booked or in the past (for today)
+                        bool isBooked = bookedSlotsForDate.contains(slot);
+                        bool isPast = false;
+                        if (selectedDate != null) {
+                          final now = DateTime.now();
+                          final todayStr = DateFormat('yyyy-MM-dd').format(now);
+                          if (DateFormat('yyyy-MM-dd').format(selectedDate!) ==
+                              todayStr) {
+                            // Parse slot start time
+                            final slotStart = slot.split(' - ')[0];
+                            final slotTime = DateFormat(
+                              'hh:mm a',
+                            ).parse(slotStart);
+                            final slotDateTime = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                              slotTime.hour,
+                              slotTime.minute,
+                            );
+                            if (slotDateTime.isBefore(now)) {
+                              isPast = true;
+                            }
+                          }
+                        }
+                        final isDisabled = isBooked || isPast;
                         return ChoiceChip(
-                          label: Text(slot),
+                          label: Text(
+                            slot,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: isDisabled ? Colors.grey : Colors.black,
+                            ),
+                          ),
                           selected: selectedTimeSlot == slot,
-                          onSelected: (selected) {
-                            setState(() {
-                              selectedTimeSlot = selected ? slot : null;
-                            });
-                          },
+                          onSelected:
+                              isDisabled
+                                  ? null
+                                  : (selected) {
+                                    setState(() {
+                                      selectedTimeSlot = selected ? slot : null;
+                                    });
+                                  },
                           selectedColor: Colors.green,
+                          backgroundColor:
+                              isDisabled ? Colors.grey.shade300 : Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 10.h,
+                          ),
                         );
                       }).toList(),
                 ),
                 SizedBox(height: 24.h),
               ],
+              // Only show fields if info is missing
               if (userName == null || email == null || phone == null) ...[
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Name'),

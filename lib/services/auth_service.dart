@@ -33,6 +33,7 @@ class AuthService {
         email: email,
         userId: userCredential.user!.uid,
         name: fullName,
+        phone: phoneNumber,
       );
 
       return userCredential;
@@ -64,6 +65,7 @@ class AuthService {
         email: email,
         userId: userCredential.user!.uid,
         name: userData.data()?['fullName'] ?? '',
+        phone: userData.data()?['phoneNumber'] ?? '',
       );
 
       return userCredential;

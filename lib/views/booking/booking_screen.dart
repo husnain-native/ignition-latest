@@ -59,7 +59,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 margin: EdgeInsets.only(bottom: 20.h),
                 child: Padding(
-                  padding: EdgeInsets.all(15.w),
+                  padding: EdgeInsets.all(15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

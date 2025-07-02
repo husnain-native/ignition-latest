@@ -11,11 +11,15 @@ class SharedPrefsService {
     required String email,
     required String userId,
     required String name,
+    String? phone,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userEmailKey, email);
     await prefs.setString(_userIdKey, userId);
     await prefs.setString(_userNameKey, name);
+    if (phone != null) {
+      await prefs.setString(_userPhoneKey, phone);
+    }
     await prefs.setBool(_isLoggedInKey, true);
   }
 
