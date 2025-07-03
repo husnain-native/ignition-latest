@@ -10,6 +10,7 @@ import '../models/space_model.dart';
 import '../views/branch_selection_screen.dart';
 import '../views/admin/admin_panel_screen.dart';
 import '../views/admin/admin_branch_selection_screen.dart';
+import '../views/admin/booking_details_screen.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
@@ -20,6 +21,7 @@ class AppRoutes {
     '/admin-panel': (context) => const AdminPanelScreen(),
     AppConstants.adminBranchSelectionRoute:
         (context) => const AdminBranchSelectionScreen(),
+    '/booking-details': (context) => const BookingDetailsScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {

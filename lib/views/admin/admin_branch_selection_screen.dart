@@ -90,6 +90,27 @@ class AdminBranchSelectionScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: 24.h),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 237, 202, 3),
+                    padding: EdgeInsets.symmetric(vertical: 18.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/booking-details');
+                  },
+                  child: Text(
+                    'Booking Details',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
