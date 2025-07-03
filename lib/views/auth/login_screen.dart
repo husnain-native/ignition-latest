@@ -151,29 +151,29 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: TextStyle(fontSize: 12.sp),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, AppConstants.signupRoute);
-                      },
-                      child: Text(
-                        'Sign Up',
-                        style: AppTextStyles.body2.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                 const Spacer(),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Text(
+                //       "Don't have an account? ",
+                //       style: TextStyle(fontSize: 12.sp),
+                //     ),
+                //     TextButton(
+                //       onPressed: () {
+                //         Navigator.pushNamed(context, AppConstants.signupRoute);
+                //       },
+                //       child: Text(
+                //         'Sign Up',
+                //         style: AppTextStyles.body2.copyWith(
+                //           color: AppColors.primary,
+                //           fontSize: 12.sp,
+                //           fontWeight: FontWeight.bold,
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {

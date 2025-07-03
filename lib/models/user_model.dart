@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String id;
   final String email;
@@ -24,10 +26,13 @@ class UserModel {
       fullName: json['fullName'] as String,
       phoneNumber: json['phoneNumber'] as String,
       profileImage: json['profileImage'] as String?,
-      createdAt:
-          json['createdAt'] is String
-              ? DateTime.parse(json['createdAt'] as String)
-              : DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+      createdAt: json['createdAt'] is String
+          ? DateTime.parse(json['createdAt'] as String)
+          : json['createdAt'] is int
+              ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int)
+              : json['createdAt'] is Timestamp
+                  ? (json['createdAt'] as Timestamp).toDate()
+                  : DateTime.now(),
       bookingHistory:
           (json['bookingHistory'] as List?)
               ?.map((e) => e.toString())

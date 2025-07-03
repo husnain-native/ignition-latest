@@ -158,7 +158,7 @@ class BookingService {
         .toList();
   }
 
-  // Update booking request status (accept/deny)
+  // Update booking request status (approve/reject)
   Future<void> updateBookingRequestStatus(
     String bookingId,
     String status,

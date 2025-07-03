@@ -67,7 +67,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+      // appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(AppConstants.defaultPadding.w),
@@ -79,7 +79,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 Container(
                   width: 120.w,
                   height: 120.w,
-                  margin: EdgeInsets.only(bottom: 24.h),
+                  margin: EdgeInsets.symmetric(vertical: 14.h),
+                 
                   child: Image.asset(
                     'assets/icons/ignition.jpeg',
                     fit: BoxFit.contain,
@@ -214,89 +215,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 SizedBox(height: 24.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Already have an account? ',
-                      style: TextStyle(fontSize: 12.sp),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          AppConstants.loginRoute,
-                        );
-                      },
-                      child: Text(
-                        'Sign In',
-                        style: AppTextStyles.body2.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () async {
-                    String username = '';
-                    String password = '';
-                    bool? result = await showDialog<bool>(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text('Admin Login'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextField(
-                                decoration: InputDecoration(
-                                  labelText: 'Username',
-                                ),
-                                onChanged: (value) => username = value,
-                              ),
-                              TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                ),
-                                onChanged: (value) => password = value,
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text('OK'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                    if (result == true &&
-                        username == 'admin' &&
-                        password == 'admin123') {
-                      Navigator.pushReplacementNamed(
-                        context,
-                        AppConstants.adminBranchSelectionRoute,
-                      );
-                    } else if (result == true) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Incorrect admin username or password'),
-                        ),
-                      );
-                    }
-                  },
-                  child: Text('Admin'),
-                ),
               ],
             ),
           ),

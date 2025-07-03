@@ -66,85 +66,210 @@ class _BookingScreenState extends State<BookingScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           margin: EdgeInsets.only(bottom: 20.h),
-                          child: Padding(
-                            padding: EdgeInsets.all(15),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.meeting_room,
-                                      color: AppColors.primary,
-                                      size: 28,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        booking.branch,
-                                        style: AppTextStyles.h2.copyWith(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
+                                    elevation: 8,
+                                    backgroundColor: Colors.white,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(24),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.warning_amber_rounded,
+                                            color: AppColors.error,
+                                            size: 48,
+                                          ),
+                                          SizedBox(height: 16),
+                                          Text(
+                                            'Cancel Booking?',
+                                            style: AppTextStyles.h2.copyWith(
+                                              color: AppColors.error,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 22,
+                                            ),
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            'Are you sure you want to cancel this booking? This action cannot be undone.',
+                                            style: AppTextStyles.body2.copyWith(
+                                              fontSize: 16,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          SizedBox(height: 24),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      AppColors.error,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 24,
+                                                    vertical: 12,
+                                                  ),
+                                                ),
+                                                onPressed: () async {
+                                                  await BookingService()
+                                                      .updateBookingRequestStatus(
+                                                        booking.id,
+                                                        'cancelled',
+                                                      );
+                                                  Navigator.of(context).pop();
+                                                  setState(() {});
+                                                },
+                                                child: Text(
+                                                  'Yes, Cancel',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              OutlinedButton(
+                                                style: OutlinedButton.styleFrom(
+                                                  side: BorderSide(
+                                                    color:
+                                                        AppColors.primaryDark,
+                                                    width: 2,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 24,
+                                                    vertical: 12,
+                                                  ),
+                                                ),
+                                                onPressed:
+                                                    () =>
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop(),
+                                                child: Text(
+                                                  'No',
+                                                  style: TextStyle(
+                                                    color:
+                                                        AppColors.primaryDark,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.meeting_room,
+                                        color: AppColors.primary,
+                                        size: 28,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          booking.branch,
+                                          style: AppTextStyles.h2.copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            booking.status == 'pending'
-                                                ? Colors.orange.shade100
-                                                : booking.status == 'accepted'
-                                                ? Colors.green.shade100
-                                                : Colors.red.shade100,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        booking.status.toUpperCase(),
-                                        style: TextStyle(
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
                                           color:
                                               booking.status == 'pending'
-                                                  ? Colors.orange
-                                                  : booking.status == 'accepted'
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                          fontWeight: FontWeight.bold,
+                                                  ? Colors.orange.shade100
+                                                  : booking.status == 'booked'
+                                                  ? AppColors.success
+                                                      .withOpacity(0.15)
+                                                  : Colors.red.shade100,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          booking.status == 'booked'
+                                              ? 'BOOKED'
+                                              : booking.status == 'pending'
+                                              ? 'PENDING'
+                                              : booking.status.toUpperCase(),
+                                          style: TextStyle(
+                                            color:
+                                                booking.status == 'pending'
+                                                    ? Colors.orange
+                                                    : booking.status == 'booked'
+                                                    ? AppColors.success
+                                                    : Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today,
-                                      color: AppColors.warning,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      booking.date,
-                                      style: AppTextStyles.body1,
-                                    ),
-                                    SizedBox(width: 16),
-                                    Icon(
-                                      Icons.access_time,
-                                      color: AppColors.warning,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      booking.timeSlot,
-                                      style: AppTextStyles.body1,
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                  SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: AppColors.warning,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        booking.date,
+                                        style: AppTextStyles.body1,
+                                      ),
+                                      SizedBox(width: 16),
+                                      Icon(
+                                        Icons.access_time,
+                                        color: AppColors.warning,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        booking.timeSlot,
+                                        style: AppTextStyles.body1,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );

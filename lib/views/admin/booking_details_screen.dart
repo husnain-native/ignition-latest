@@ -40,13 +40,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
     return Container(
       decoration: const BoxDecoration(color: AppColors.info),
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromARGB(255, 202, 204, 207),
         appBar: AppBar(
           title: const Text(
             'Booking Details',
             style: TextStyle(color: AppColors.secondaryDark),
           ),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.info,
           elevation: 0,
           iconTheme: const IconThemeData(color: AppColors.secondaryDark),
         ),
@@ -77,13 +77,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(height: 24.h),
-                  Text(
-                    'User Booking Summary',
-                    style: AppTextStyles.h1.copyWith(
-                      color: AppColors.secondaryDark,
-                      fontSize: 28.sp,
-                    ),
-                  ),
+                  // Text(
+                  //   'User Booking Summary',
+                  //   style: AppTextStyles.h1.copyWith(
+                  //     color: AppColors.secondaryDark,
+                  //     fontSize: 28.sp,
+                  //   ),
+                  // ),
                   SizedBox(height: 8.h),
                   Text(
                     'Bookings made by users in the last 30 days',
@@ -103,7 +103,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                         ),
                         color: Colors.white.withOpacity(0.95),
                         child: Padding(
-                          padding: EdgeInsets.all(14.w),
+                          padding: EdgeInsets.all(8.w),
                           child: DataTable(
                             headingRowColor: MaterialStateProperty.all(
                               const Color.fromARGB(255, 133, 24, 10),
@@ -154,9 +154,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                 users.map((user) {
                                   final firstBooking =
                                       userBookings[user]!.first;
-                                  final acceptedBookings =
+                                  final bookedBookings =
                                       userBookings[user]!
-                                          .where((b) => b.status == 'accepted')
+                                          .where((b) => b.status == 'booked')
                                           .toList();
                                   return DataRow(
                                     cells: [
@@ -197,8 +197,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                                                   BorderRadius.circular(2.r),
                                             ),
                                             child: Text(
-                                              acceptedBookings.length
-                                                  .toString(),
+                                              bookedBookings.length.toString(),
                                               style: AppTextStyles.h3.copyWith(
                                                 color: const Color.fromARGB(
                                                   255,

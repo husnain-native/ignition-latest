@@ -8,7 +8,7 @@ class BookingModel {
   final DateTime startTime;
   final DateTime endTime;
   final double totalPrice;
-  final String status; // pending, confirmed, cancelled, completed
+  final String status; // pending, booked, rejected
   final DateTime createdAt;
   final Map<String, dynamic>? additionalServices;
 
@@ -74,7 +74,7 @@ class BookingRequest {
   @HiveField(7)
   final String timeSlot;
   @HiveField(8)
-  final String status; // pending, accepted, denied
+  final String status; // pending, booked, rejected
 
   BookingRequest({
     required this.id,
@@ -89,6 +89,9 @@ class BookingRequest {
   });
 
   factory BookingRequest.fromMap(Map<String, dynamic> map, String id) {
+    String status = map['status'] ?? 'pending';
+    if (status == 'accepted') status = 'booked';
+    if (status == 'denied') status = 'rejected';
     return BookingRequest(
       id: id,
       userId: map['userId'] ?? '',
@@ -98,7 +101,7 @@ class BookingRequest {
       branch: map['branch'] ?? '',
       date: map['date'] ?? '',
       timeSlot: map['timeSlot'] ?? '',
-      status: map['status'] ?? 'pending',
+      status: status,
     );
   }
 

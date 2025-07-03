@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../services/booking_service.dart';
 import '../../models/booking_model.dart';
 import '../../services/shared_prefs_service.dart';
+import '../../theme/app_text_styles.dart';
+import '../../theme/app_colors.dart';
 
 class BookingForm extends StatefulWidget {
   final String branchName;
@@ -64,7 +66,7 @@ class _BookingFormState extends State<BookingForm> {
                 (b) =>
                     b.date == dateStr &&
                     b.branch == widget.branchName &&
-                    (b.status == 'accepted' || b.status == 'pending'),
+                    (b.status == 'booked' || b.status == 'pending'),
               )
               .map((b) => b.timeSlot)
               .toList();
@@ -122,9 +124,62 @@ class _BookingFormState extends State<BookingForm> {
       if (selectedDate != null) {
         await _fetchBookedSlotsForDate(selectedDate!);
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Request successfully sent')));
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder:
+            (context) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 32.h, horizontal: 24.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 64.sp,
+                      color: const Color.fromARGB(255, 22, 209, 53),
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      'Request sent successfully!',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.info,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 18.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 33, 175, 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'OK',
+                          style: AppTextStyles.h3.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -146,10 +201,41 @@ class _BookingFormState extends State<BookingForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Book a Meeting Room at \n Ignition ${widget.branchName}',
-                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+              RichText(
                 textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: AppTextStyles.h1.copyWith(
+                    fontSize: 22.sp,
+                    color: Colors.black,
+                    letterSpacing: 1.1,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  children: [
+                    const TextSpan(text: 'Book a Meeting Room at\n'),
+                    TextSpan(
+                      text: 'Ignition ',
+                      style: AppTextStyles.h1.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22.sp,
+                      ),
+                    ),
+                    TextSpan(
+                      text: widget.branchName,
+                      style: AppTextStyles.h1.copyWith(
+                        color: const Color.fromARGB(255, 191, 38, 0),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 25.sp,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 24.h),
               Text(

@@ -93,4 +93,20 @@ class AuthService {
     final doc = await _firestore.collection('users').doc(userId).get();
     return doc.data();
   }
+
+  // Fetch all users (for admin)
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    final querySnapshot = await _firestore.collection('users').get();
+    return querySnapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  // Delete a user (from Firestore only)
+  Future<void> deleteUser(String userId) async {
+    await _firestore.collection('users').doc(userId).delete();
+    // Optionally, also delete from Firebase Auth if needed (requires admin privileges)
+  }
 }
