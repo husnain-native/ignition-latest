@@ -39,48 +39,54 @@ class _HomeScreenState extends State<HomeScreen> {
       body = Center(child: Text('Coming soon...'));
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.info,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.warning),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/branch-selection');
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacementNamed(context, '/branch-selection');
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.info,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: AppColors.warning),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/branch-selection');
+            },
+          ),
+          title: Text(
+            widget.branchName,
+            style: AppTextStyles.h2.copyWith(
+              color: AppColors.warning,
+              fontSize: 22.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: body,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
           },
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined, color: AppColors.primary),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.calendar_today_outlined, color: AppColors.text),
+              label: 'Bookings',
+            ),
+            // NavigationDestination(
+            //   icon: Icon(Icons.settings_outlined, color: AppColors.text),
+            //   label: 'Settings',
+            // ),
+          ],
         ),
-        title: Text(
-          widget.branchName,
-          style: AppTextStyles.h2.copyWith(
-            color: AppColors.warning,
-            fontSize: 22.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: body,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined, color: AppColors.primary),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined, color: AppColors.text),
-            label: 'Bookings',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined, color: AppColors.text),
-            label: 'Settings',
-          ),
-        ],
       ),
     );
   }

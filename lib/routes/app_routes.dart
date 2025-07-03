@@ -9,6 +9,7 @@ import '../views/booking/space_details_screen.dart';
 import '../models/space_model.dart';
 import '../views/branch_selection_screen.dart';
 import '../views/admin/admin_panel_screen.dart';
+import '../views/admin/admin_branch_selection_screen.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
@@ -17,6 +18,8 @@ class AppRoutes {
     AppConstants.signupRoute: (context) => const SignupScreen(),
     '/branch-selection': (context) => const BranchSelectionScreen(),
     '/admin-panel': (context) => const AdminPanelScreen(),
+    AppConstants.adminBranchSelectionRoute:
+        (context) => const AdminBranchSelectionScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {

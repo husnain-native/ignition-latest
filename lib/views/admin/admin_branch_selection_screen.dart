@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../constants/app_constants.dart';
+import '../../constants/app_constants.dart';
 
-class BranchSelectionScreen extends StatelessWidget {
-  const BranchSelectionScreen({super.key});
+class AdminBranchSelectionScreen extends StatelessWidget {
+  const AdminBranchSelectionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class BranchSelectionScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Choose the branch',
+                  'Choose the branch to manage',
                   style: TextStyle(
                     fontSize: 28.sp,
                     fontWeight: FontWeight.bold,
@@ -52,7 +52,7 @@ class BranchSelectionScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacementNamed(
                       context,
-                      AppConstants.homeRoute,
+                      '/admin-panel',
                       arguments: 'Johar Town',
                     );
                   },
@@ -77,7 +77,7 @@ class BranchSelectionScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacementNamed(
                       context,
-                      AppConstants.homeRoute,
+                      '/admin-panel',
                       arguments: 'Bahria Orchard',
                     );
                   },

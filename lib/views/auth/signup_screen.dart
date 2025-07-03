@@ -283,11 +283,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     if (result == true &&
                         username == 'admin' &&
                         password == 'admin123') {
-                      Navigator.pushReplacement(
+                      Navigator.pushReplacementNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const AdminPanelScreen(),
-                        ),
+                        AppConstants.adminBranchSelectionRoute,
                       );
                     } else if (result == true) {
                       ScaffoldMessenger.of(context).showSnackBar(

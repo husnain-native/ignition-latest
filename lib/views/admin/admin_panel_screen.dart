@@ -9,9 +9,11 @@ import 'package:hive/hive.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart' as share;
+import '../../constants/app_constants.dart';
 
 class AdminPanelScreen extends StatefulWidget {
-  const AdminPanelScreen({Key? key}) : super(key: key);
+  final String? branchName;
+  const AdminPanelScreen({Key? key, this.branchName}) : super(key: key);
 
   @override
   State<AdminPanelScreen> createState() => _AdminPanelScreenState();
@@ -35,91 +37,116 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppColors.info,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: AppColors.warning),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-          title: Text(
-            'Admin Panel',
-            style: AppTextStyles.h2.copyWith(color: AppColors.warning),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.download, color: AppColors.primary),
-              tooltip: 'Export as JSON',
-              onPressed: () async {
-                final box = await Hive.openBox<BookingRequest>('bookingsBox');
-                final allBookings = box.values.toList();
-                final jsonList = allBookings.map((b) => b.toMap()).toList();
-                final jsonString = jsonEncode(jsonList);
-
-                Directory? exportDir;
-                if (Platform.isAndroid) {
-                  exportDir = await getExternalStorageDirectory();
-                } else if (Platform.isIOS) {
-                  exportDir = await getApplicationDocumentsDirectory();
-                }
-
-                final file = File('${exportDir!.path}/bookings_export.json');
-                await file.writeAsString(jsonString);
-
-                print('Export path: ${file.path}');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Bookings exported to ${file.path}')),
+    final String? selectedBranch =
+        ModalRoute.of(context)?.settings.arguments as String? ??
+        widget.branchName;
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacementNamed(
+          context,
+          AppConstants.adminBranchSelectionRoute,
+        );
+        return false;
+      },
+      child: DefaultTabController(
+        length: 4,
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: AppColors.info,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: AppColors.warning),
+              onPressed: () {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppConstants.adminBranchSelectionRoute,
                 );
               },
             ),
-          ],
-          bottom: TabBar(
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.warning,
-            indicatorColor: AppColors.primary,
-            tabs: [
-              Tab(text: 'All'),
-              Tab(text: 'Pending'),
-              Tab(text: 'Accepted'),
-              Tab(text: 'Denied'),
+            title: Text(
+              selectedBranch ?? '',
+              style: AppTextStyles.h2.copyWith(color: AppColors.warning),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.download, color: AppColors.primary),
+                tooltip: 'Export as JSON',
+                onPressed: () async {
+                  final box = await Hive.openBox<BookingRequest>('bookingsBox');
+                  final allBookings = box.values.toList();
+                  final jsonList = allBookings.map((b) => b.toMap()).toList();
+                  final jsonString = jsonEncode(jsonList);
+
+                  Directory? exportDir;
+                  if (Platform.isAndroid) {
+                    exportDir = await getExternalStorageDirectory();
+                  } else if (Platform.isIOS) {
+                    exportDir = await getApplicationDocumentsDirectory();
+                  }
+
+                  final file = File('${exportDir!.path}/bookings_export.json');
+                  await file.writeAsString(jsonString);
+
+                  print('Export path: ${file.path}');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Bookings exported to ${file.path}'),
+                    ),
+                  );
+                },
+              ),
             ],
-          ),
-        ),
-        body: FutureBuilder<List<BookingRequest>>(
-          future: _futureBookings,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No booking requests.'));
-            }
-            final bookings = snapshot.data!;
-            final sortedBookings = List<BookingRequest>.from(bookings)
-              ..sort((a, b) => b.id.compareTo(a.id));
-            return TabBarView(
-              children: [
-                // All
-                _buildBookingList(sortedBookings),
-                // Pending
-                _buildBookingList(
-                  sortedBookings.where((b) => b.status == 'pending').toList(),
-                ),
-                // Accepted
-                _buildBookingList(
-                  sortedBookings.where((b) => b.status == 'accepted').toList(),
-                ),
-                // Denied
-                _buildBookingList(
-                  sortedBookings.where((b) => b.status == 'denied').toList(),
-                ),
+            bottom: TabBar(
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.warning,
+              indicatorColor: AppColors.primary,
+              tabs: [
+                Tab(text: 'All'),
+                Tab(text: 'Pending'),
+                Tab(text: 'Accepted'),
+                Tab(text: 'Denied'),
               ],
-            );
-          },
+            ),
+          ),
+          body: FutureBuilder<List<BookingRequest>>(
+            future: _futureBookings,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text('No booking requests.'));
+              }
+              final bookings = snapshot.data!;
+              final filteredBookings =
+                  selectedBranch == null
+                      ? bookings
+                      : bookings
+                          .where((b) => b.branch == selectedBranch)
+                          .toList();
+              final sortedBookings = List<BookingRequest>.from(filteredBookings)
+                ..sort((a, b) => b.id.compareTo(a.id));
+              return TabBarView(
+                children: [
+                  // All
+                  _buildBookingList(sortedBookings),
+                  // Pending
+                  _buildBookingList(
+                    sortedBookings.where((b) => b.status == 'pending').toList(),
+                  ),
+                  // Accepted
+                  _buildBookingList(
+                    sortedBookings
+                        .where((b) => b.status == 'accepted')
+                        .toList(),
+                  ),
+                  // Denied
+                  _buildBookingList(
+                    sortedBookings.where((b) => b.status == 'denied').toList(),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

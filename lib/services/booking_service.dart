@@ -167,4 +167,25 @@ class BookingService {
       'status': status,
     });
   }
+
+  // Stream booking requests for a specific user (real-time)
+  Stream<List<BookingRequest>> userBookingRequestsStream(String userId) {
+    return _database
+        .child(bookingsPath)
+        .orderByChild('userId')
+        .equalTo(userId)
+        .onValue
+        .map((event) {
+          if (event.snapshot.value == null) return [];
+          final data = event.snapshot.value as Map<dynamic, dynamic>;
+          return data.entries
+              .map(
+                (entry) => BookingRequest.fromMap(
+                  Map<String, dynamic>.from(entry.value),
+                  entry.key,
+                ),
+              )
+              .toList();
+        });
+  }
 }

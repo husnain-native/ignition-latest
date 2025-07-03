@@ -18,6 +18,7 @@ class AppConstants {
   static const String homeRoute = "/home";
   static const String bookingRoute = "/booking";
   static const String spaceDetailsRoute = "/space-details";
+  static const String adminBranchSelectionRoute = "/admin-branch-selection";
 
   // Shared Preferences Keys
   static const String userKey = "user_key";
