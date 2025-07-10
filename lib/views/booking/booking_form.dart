@@ -158,7 +158,12 @@ class _BookingFormState extends State<BookingForm> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 33, 175, 40),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            33,
+                            175,
+                            40,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -269,60 +274,62 @@ class _BookingFormState extends State<BookingForm> {
                   mainAxisSpacing: 8.h,
                   crossAxisSpacing: 2.w,
                   children:
-                      timeSlots.map((slot) {
-                        // Disable if already booked or in the past (for today)
-                        bool isBooked = bookedSlotsForDate.contains(slot);
-                        bool isPast = false;
-                        if (selectedDate != null) {
-                          final now = DateTime.now();
-                          final todayStr = DateFormat('yyyy-MM-dd').format(now);
-                          if (DateFormat('yyyy-MM-dd').format(selectedDate!) ==
-                              todayStr) {
-                            // Parse slot start time
-                            final slotStart = slot.split(' - ')[0];
-                            final slotTime = DateFormat(
-                              'hh:mm a',
-                            ).parse(slotStart);
-                            final slotDateTime = DateTime(
-                              now.year,
-                              now.month,
-                              now.day,
-                              slotTime.hour,
-                              slotTime.minute,
-                            );
-                            if (slotDateTime.isBefore(now)) {
-                              isPast = true;
+                      timeSlots
+                          .where((slot) {
+                            bool isBooked = bookedSlotsForDate.contains(slot);
+                            bool isPast = false;
+                            if (selectedDate != null) {
+                              final now = DateTime.now();
+                              final todayStr = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(now);
+                              if (DateFormat(
+                                    'yyyy-MM-dd',
+                                  ).format(selectedDate!) ==
+                                  todayStr) {
+                                final slotStart = slot.split(' - ')[0];
+                                final slotTime = DateFormat(
+                                  'hh:mm a',
+                                ).parse(slotStart);
+                                final slotDateTime = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                  slotTime.hour,
+                                  slotTime.minute,
+                                );
+                                if (slotDateTime.isBefore(now)) {
+                                  isPast = true;
+                                }
+                              }
                             }
-                          }
-                        }
-                        final isDisabled = isBooked || isPast;
-                        return ChoiceChip(
-                          label: Text(
-                            slot,
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w600,
-                              color: isDisabled ? Colors.grey : Colors.black,
-                            ),
-                          ),
-                          selected: selectedTimeSlot == slot,
-                          onSelected:
-                              isDisabled
-                                  ? null
-                                  : (selected) {
-                                    setState(() {
-                                      selectedTimeSlot = selected ? slot : null;
-                                    });
-                                  },
-                          selectedColor: Colors.green,
-                          backgroundColor:
-                              isDisabled ? Colors.grey.shade300 : Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 10.h,
-                          ),
-                        );
-                      }).toList(),
+                            return !isBooked && !isPast;
+                          })
+                          .map((slot) {
+                            return ChoiceChip(
+                              label: Text(
+                                slot,
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              selected: selectedTimeSlot == slot,
+                              onSelected: (selected) {
+                                setState(() {
+                                  selectedTimeSlot = selected ? slot : null;
+                                });
+                              },
+                              selectedColor: Colors.green,
+                              backgroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 10.h,
+                              ),
+                            );
+                          })
+                          .toList(),
                 ),
                 SizedBox(height: 24.h),
               ],

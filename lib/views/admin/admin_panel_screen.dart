@@ -21,11 +21,51 @@ class AdminPanelScreen extends StatefulWidget {
 
 class _AdminPanelScreenState extends State<AdminPanelScreen> {
   late Future<List<BookingRequest>> _futureBookings;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // Helper to highlight search term in a string with base style
+  InlineSpan _highlightText(String text, TextStyle baseStyle) {
+    if (_searchQuery.isEmpty) return TextSpan(text: text, style: baseStyle);
+    final lowerText = text.toLowerCase();
+    final lowerQuery = _searchQuery.toLowerCase();
+    final spans = <TextSpan>[];
+    int start = 0;
+    int index;
+    while ((index = lowerText.indexOf(lowerQuery, start)) != -1) {
+      if (index > start) {
+        spans.add(
+          TextSpan(text: text.substring(start, index), style: baseStyle),
+        );
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + lowerQuery.length),
+          style: baseStyle.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+          ),
+        ),
+      );
+      start = index + lowerQuery.length;
+    }
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: baseStyle));
+    }
+    return TextSpan(children: spans);
+  }
 
   @override
   void initState() {
     super.initState();
     _futureBookings = BookingService().getAllBookingRequests();
+    // Removed live listener for search
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _updateStatus(String bookingId, String status) async {
@@ -115,51 +155,98 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
             ),
           ),
-          body: FutureBuilder<List<BookingRequest>>(
-            future: _futureBookings,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text('No booking requests.'));
-              }
-              final bookings = snapshot.data!;
-              final filteredBookings =
-                  selectedBranch == null
-                      ? bookings
-                      : bookings
-                          .where((b) => b.branch == selectedBranch)
-                          .toList();
-              final sortedBookings = List<BookingRequest>.from(filteredBookings)
-                ..sort((a, b) => b.id.compareTo(a.id));
-              return TabBarView(
-                children: [
-                  // All
-                  _buildBookingList(sortedBookings),
-                  // Pending
-                  _buildBookingList(
-                    sortedBookings.where((b) => b.status == 'pending').toList(),
-                  ),
-                  // Booked
-                  _buildBookingList(
-                    sortedBookings.where((b) => b.status == 'booked').toList(),
-                  ),
-                  // Rejected
-                  _buildBookingList(
-                    sortedBookings
-                        .where((b) => b.status == 'rejected')
-                        .toList(),
-                  ),
-                  // Cancelled
-                  _buildBookingList(
-                    sortedBookings
-                        .where((b) => b.status == 'cancelled')
-                        .toList(),
-                  ),
-                ],
-              );
-            },
+          body: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Search by name, email, or date (yyyy-mm-dd)',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        onSubmitted: (_) {
+                          setState(() {
+                            _searchQuery =
+                                _searchController.text.trim().toLowerCase();
+                          });
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery =
+                              _searchController.text.trim().toLowerCase();
+                        });
+                      },
+                      child: Text('Search'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: FutureBuilder<List<BookingRequest>>(
+                  future: _futureBookings,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(child: Text('No booking requests.'));
+                    }
+                    final bookings = snapshot.data!;
+                    final filteredBookings =
+                        selectedBranch == null
+                            ? bookings
+                            : bookings
+                                .where((b) => b.branch == selectedBranch)
+                                .toList();
+                    final sortedBookings = List<BookingRequest>.from(
+                      filteredBookings,
+                    )..sort((a, b) => b.id.compareTo(a.id));
+                    return TabBarView(
+                      children: [
+                        // All
+                        _buildBookingList(sortedBookings),
+                        // Pending
+                        _buildBookingList(
+                          sortedBookings
+                              .where((b) => b.status == 'pending')
+                              .toList(),
+                        ),
+                        // Booked
+                        _buildBookingList(
+                          sortedBookings
+                              .where((b) => b.status == 'booked')
+                              .toList(),
+                        ),
+                        // Rejected
+                        _buildBookingList(
+                          sortedBookings
+                              .where((b) => b.status == 'rejected')
+                              .toList(),
+                        ),
+                        // Cancelled
+                        _buildBookingList(
+                          sortedBookings
+                              .where((b) => b.status == 'cancelled')
+                              .toList(),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -170,11 +257,34 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     if (bookings.isEmpty) {
       return Center(child: Text('No bookings in this category.'));
     }
+
+    // If search is active, show matches at the top, then the rest
+    List<BookingRequest> matches = [];
+    List<BookingRequest> nonMatches = [];
+    if (_searchQuery.isNotEmpty) {
+      for (var b in bookings) {
+        final name = (b.userName ?? '').toLowerCase();
+        final email = (b.email ?? '').toLowerCase();
+        final date = (b.date ?? '').toLowerCase();
+        if (name.contains(_searchQuery) ||
+            email.contains(_searchQuery) ||
+            date.contains(_searchQuery)) {
+          matches.add(b);
+        } else {
+          nonMatches.add(b);
+        }
+      }
+    } else {
+      nonMatches = bookings;
+    }
+    final displayList = [...matches, ...nonMatches];
+
     return ListView.builder(
       padding: EdgeInsets.all(16.w),
-      itemCount: bookings.length,
+      itemCount: displayList.length,
       itemBuilder: (context, index) {
-        final booking = bookings[index];
+        final booking = displayList[index];
+        final isMatch = _searchQuery.isNotEmpty && index < matches.length;
         return Card(
           elevation: 4,
           shape: RoundedRectangleBorder(
@@ -290,121 +400,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         },
                       );
                     },
-                    child: _buildBookingCardContent(booking),
-                  )
-                  : booking.status == 'rejected'
-                  ? InkWell(
-                    borderRadius: BorderRadius.circular(16.r),
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return Dialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            elevation: 8,
-                            backgroundColor: Colors.white,
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: AppColors.primary,
-                                    size: 48,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Approve Booking?',
-                                    style: AppTextStyles.h2.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 22,
-                                    ),
-                                  ),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'Do you want to approve this booking? This will move it to Booked.',
-                                    style: AppTextStyles.body2.copyWith(
-                                      fontSize: 16,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  SizedBox(height: 24),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
-                                          ),
-                                        ),
-                                        onPressed: () async {
-                                          await _updateStatus(
-                                            booking.id,
-                                            'booked',
-                                          );
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text(
-                                          'Approve',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(
-                                            color: AppColors.primaryDark,
-                                            width: 2,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
-                                          ),
-                                        ),
-                                        onPressed:
-                                            () => Navigator.of(context).pop(),
-                                        child: Text(
-                                          'No',
-                                          style: TextStyle(
-                                            color: AppColors.primaryDark,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    child: _buildBookingCardContent(booking),
+                    child: _buildBookingCardContent(
+                      booking,
+                      highlight: isMatch,
+                    ),
                   )
                   : Column(
                     children: [
-                      _buildBookingCardContent(booking),
+                      _buildBookingCardContent(booking, highlight: isMatch),
                       if (booking.status == 'pending') ...[
                         SizedBox(height: 5.h),
                         Padding(
@@ -478,7 +481,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  Widget _buildBookingCardContent(BookingRequest booking) {
+  Widget _buildBookingCardContent(
+    BookingRequest booking, {
+    bool highlight = false,
+  }) {
     return Padding(
       padding: EdgeInsets.all(20.w),
       child: Column(
@@ -530,10 +536,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             children: [
               Icon(Icons.person, color: AppColors.info, size: 20.sp),
               SizedBox(width: 8.w),
-              Text(
-                booking.userName,
-                style: AppTextStyles.body1.copyWith(fontSize: 14.sp),
-              ),
+              highlight
+                  ? RichText(
+                    text: _highlightText(
+                      booking.userName,
+                      AppTextStyles.body1.copyWith(fontSize: 14.sp),
+                    ),
+                    textScaleFactor: 1.0,
+                  )
+                  : Text(
+                    booking.userName,
+                    style: AppTextStyles.body1.copyWith(fontSize: 14.sp),
+                  ),
             ],
           ),
           SizedBox(height: 8.h),
@@ -541,10 +555,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             children: [
               Icon(Icons.email, color: AppColors.info, size: 20.sp),
               SizedBox(width: 8.w),
-              Text(
-                booking.email,
-                style: AppTextStyles.body1.copyWith(fontSize: 14.sp),
-              ),
+              highlight
+                  ? RichText(
+                    text: _highlightText(
+                      booking.email,
+                      AppTextStyles.body1.copyWith(fontSize: 14.sp),
+                    ),
+                    textScaleFactor: 1.0,
+                  )
+                  : Text(
+                    booking.email,
+                    style: AppTextStyles.body1.copyWith(fontSize: 14.sp),
+                  ),
             ],
           ),
           SizedBox(height: 8.h),
@@ -563,10 +585,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             children: [
               Icon(Icons.calendar_today, color: AppColors.warning, size: 20.sp),
               SizedBox(width: 8.w),
-              Text(
-                booking.date,
-                style: AppTextStyles.body1.copyWith(fontSize: 14.sp),
-              ),
+              highlight
+                  ? RichText(
+                    text: _highlightText(
+                      booking.date,
+                      AppTextStyles.body1.copyWith(fontSize: 14.sp),
+                    ),
+                    textScaleFactor: 1.0,
+                  )
+                  : Text(
+                    booking.date,
+                    style: AppTextStyles.body1.copyWith(fontSize: 14.sp),
+                  ),
               SizedBox(width: 16.w),
               Icon(Icons.access_time, color: AppColors.warning, size: 20.sp),
               SizedBox(width: 8.w),
