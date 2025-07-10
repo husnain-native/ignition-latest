@@ -4,6 +4,8 @@ import 'package:ignition/models/user_model.dart';
 import 'package:ignition/theme/app_colors.dart';
 import 'package:ignition/theme/app_text_styles.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({Key? key}) : super(key: key);
@@ -62,6 +64,200 @@ class _UserListScreenState extends State<UserListScreen> {
     );
   }
 
+  void _showUserDetailDialog(UserModel user) {
+    final nameController = TextEditingController(text: user.fullName);
+    final emailController = TextEditingController(text: user.email);
+    final phoneController = TextEditingController(text: user.phoneNumber);
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+    bool isResetting = false;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('User Details'),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(labelText: 'Name'),
+                        validator:
+                            (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Name required'
+                                    : null,
+                      ),
+                      TextFormField(
+                        controller: emailController,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        enabled: false, // Email is not editable
+                      ),
+                      TextFormField(
+                        controller: phoneController,
+                        decoration: const InputDecoration(labelText: 'Phone'),
+                        validator:
+                            (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Phone required'
+                                    : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed:
+                      isSaving || isResetting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
+                  onPressed:
+                      isSaving || isResetting
+                          ? null
+                          : () async {
+                            if (!(formKey.currentState?.validate() ?? false))
+                              return;
+                            setState(() => isSaving = true);
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(user.id)
+                                  .update({
+                                    'fullName': nameController.text.trim(),
+                                    'phoneNumber': phoneController.text.trim(),
+                                  });
+                              if (context.mounted) Navigator.of(context).pop();
+                              if (mounted)
+                                setState(() {
+                                  _usersFuture = _fetchUsers();
+                                });
+                            } catch (e) {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        title: const Text('Error'),
+                                        content: Text(
+                                          'Failed to update user: $e',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () =>
+                                                    Navigator.of(context).pop(),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                              }
+                            }
+                            setState(() => isSaving = false);
+                          },
+                  child:
+                      isSaving
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text(
+                            'Save',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                  ),
+                  onPressed:
+                      isSaving || isResetting
+                          ? null
+                          : () async {
+                            setState(() => isResetting = true);
+                            try {
+                              await FirebaseAuth.instance
+                                  .sendPasswordResetEmail(
+                                    email: emailController.text.trim(),
+                                  );
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        title: const Text(
+                                          'Password Reset Email Sent',
+                                        ),
+                                        content: Text(
+                                          'A password reset email has been sent to ${emailController.text.trim()}.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () =>
+                                                    Navigator.of(context).pop(),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        title: const Text('Error'),
+                                        content: Text(
+                                          'Failed to send reset email: $e',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () =>
+                                                    Navigator.of(context).pop(),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                              }
+                            }
+                            setState(() => isResetting = false);
+                          },
+                  child:
+                      isResetting
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text('Send Password Reset Email'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,7 +286,7 @@ class _UserListScreenState extends State<UserListScreen> {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Container(
-              width: 700.w,
+              width: 370.w,
               padding: EdgeInsets.all(16.w),
               child: DataTable(
                 headingRowColor: MaterialStateProperty.all(
@@ -104,29 +300,11 @@ class _UserListScreenState extends State<UserListScreen> {
                   }
                   return null;
                 }),
-                columnSpacing: 24.w,
+                columnSpacing: 40.w,
                 columns: [
                   DataColumn(
                     label: Text(
                       'Name',
-                      style: AppTextStyles.h2.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Email',
-                      style: AppTextStyles.h2.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Phone',
                       style: AppTextStyles.h2.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -155,14 +333,16 @@ class _UserListScreenState extends State<UserListScreen> {
                       return Colors.white;
                     }),
                     cells: [
-                      DataCell(Text(user.fullName, style: AppTextStyles.body1)),
-                      DataCell(Text(user.email, style: AppTextStyles.body1)),
                       DataCell(
-                        Text(user.phoneNumber, style: AppTextStyles.body1),
+                        Text(user.fullName, style: AppTextStyles.body1),
+                        onTap: () => _showUserDetailDialog(user),
                       ),
                       DataCell(
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Color.fromARGB(255, 82, 10, 5),
+                          ),
                           onPressed: () => _showDeleteDialog(user),
                         ),
                       ),
@@ -179,7 +359,7 @@ class _UserListScreenState extends State<UserListScreen> {
           Navigator.pushNamed(context, '/signup');
         },
         backgroundColor: const Color.fromARGB(255, 110, 23, 11),
-        child: const Icon(Icons.add, color: Colors.white,),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
