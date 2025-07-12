@@ -5,6 +5,7 @@ import '../../theme/app_text_styles.dart';
 import '../../services/booking_service.dart';
 import '../../models/booking_model.dart';
 import '../../services/shared_prefs_service.dart';
+import '../../services/notification_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String branchName;
@@ -131,6 +132,13 @@ class _BookingScreenState extends State<BookingScreen> {
                                                         booking.id,
                                                         'cancelled',
                                                       );
+                                                  // Notify admin after user cancels booking
+                                                  await NotificationService.notifyAdminOnBooking(
+                                                    userName: booking.userName,
+                                                    branch: booking.branch,
+                                                    timeSlot: booking.timeSlot,
+                                                    date: booking.date,
+                                                  );
                                                   Navigator.of(context).pop();
                                                   setState(() {});
                                                 },

@@ -154,28 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 const Spacer(),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     Text(
-                //       "Don't have an account? ",
-                //       style: TextStyle(fontSize: 12.sp),
-                //     ),
-                //     TextButton(
-                //       onPressed: () {
-                //         Navigator.pushNamed(context, AppConstants.signupRoute);
-                //       },
-                //       child: Text(
-                //         'Sign Up',
-                //         style: AppTextStyles.body2.copyWith(
-                //           color: AppColors.primary,
-                //           fontSize: 12.sp,
-                //           fontWeight: FontWeight.bold,
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
+               
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {
@@ -220,17 +199,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (result == true &&
                         username == 'admin' &&
                         password == 'admin123') {
-                      // Save admin FCM token
+                      // Save admin FCM token for each device separately
                       final fcmToken =
                           await FirebaseMessaging.instance.getToken();
                       if (fcmToken != null) {
                         await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc('admin')
+                            .collection('admin_devices')
+                            .doc(fcmToken)
                             .set({
                               'role': 'admin',
                               'fcmToken': fcmToken,
                               'username': username,
+                              'createdAt': FieldValue.serverTimestamp(),
                             }, SetOptions(merge: true));
                       }
                       Navigator.pushReplacementNamed(

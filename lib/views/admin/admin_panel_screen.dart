@@ -71,7 +71,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Future<void> _updateStatus(String bookingId, String status) async {
     await BookingService().updateBookingRequestStatus(bookingId, status);
-    // Notify user after status update
+    // Notify user after status update (booked, rejected, or cancelled)
     final allBookings = await BookingService().getAllBookingRequests();
     final updatedBooking = allBookings.firstWhere(
       (b) => b.id == bookingId,
@@ -82,6 +82,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         userId: updatedBooking.userId,
         branch: updatedBooking.branch,
         timeSlot: updatedBooking.timeSlot,
+        date: updatedBooking.date,
         status: status,
       );
     }

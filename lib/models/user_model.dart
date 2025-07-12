@@ -21,18 +21,19 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      fullName: json['fullName'] as String,
-      phoneNumber: json['phoneNumber'] as String,
+      id: json['id'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      fullName: json['fullName'] as String? ?? '',
+      phoneNumber: json['phoneNumber'] as String? ?? '',
       profileImage: json['profileImage'] as String?,
-      createdAt: json['createdAt'] is String
-          ? DateTime.parse(json['createdAt'] as String)
-          : json['createdAt'] is int
+      createdAt:
+          json['createdAt'] is String
+              ? DateTime.parse(json['createdAt'] as String)
+              : json['createdAt'] is int
               ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int)
               : json['createdAt'] is Timestamp
-                  ? (json['createdAt'] as Timestamp).toDate()
-                  : DateTime.now(),
+              ? (json['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
       bookingHistory:
           (json['bookingHistory'] as List?)
               ?.map((e) => e.toString())

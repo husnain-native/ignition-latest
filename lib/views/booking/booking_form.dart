@@ -118,6 +118,7 @@ class _BookingFormState extends State<BookingForm> {
         userName: booking.userName,
         branch: booking.branch,
         timeSlot: booking.timeSlot,
+        date: booking.date,
       );
       final all = await BookingService().getAllBookingRequests();
       print('All bookings in Hive:');

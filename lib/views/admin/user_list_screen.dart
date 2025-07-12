@@ -15,24 +15,25 @@ class UserListScreen extends StatefulWidget {
 }
 
 class _UserListScreenState extends State<UserListScreen> {
-  late Future<List<UserModel>> _usersFuture;
+  // Remove _usersFuture and _fetchUsers
 
-  @override
-  void initState() {
-    super.initState();
-    _usersFuture = _fetchUsers();
-  }
-
-  Future<List<UserModel>> _fetchUsers() async {
-    final usersRaw = await AuthService().getAllUsers();
-    return usersRaw.map((data) => UserModel.fromJson(data)).toList();
+  Stream<List<UserModel>> _userStream() {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) {
+                final data = doc.data();
+                data['id'] = doc.id;
+                return UserModel.fromJson(data);
+              }).toList(),
+        );
   }
 
   Future<void> _deleteUser(String userId) async {
     await AuthService().deleteUser(userId);
-    setState(() {
-      _usersFuture = _fetchUsers();
-    });
+    // No need to update state, StreamBuilder will auto-update
   }
 
   void _showDeleteDialog(UserModel user) {
@@ -42,7 +43,7 @@ class _UserListScreenState extends State<UserListScreen> {
           (context) => AlertDialog(
             title: Text('Delete User'),
             content: Text(
-              'Are you sure you want to delete \\${user.fullName}?',
+              'Are you sure you want to delete ${user.fullName}?',
             ),
             actions: [
               TextButton(
@@ -142,7 +143,7 @@ class _UserListScreenState extends State<UserListScreen> {
                               if (context.mounted) Navigator.of(context).pop();
                               if (mounted)
                                 setState(() {
-                                  _usersFuture = _fetchUsers();
+                                  // _usersFuture = _fetchUsers(); // This line is removed
                                 });
                             } catch (e) {
                               if (context.mounted) {
@@ -270,8 +271,8 @@ class _UserListScreenState extends State<UserListScreen> {
         backgroundColor: AppColors.info,
         iconTheme: IconThemeData(color: AppColors.secondaryDark),
       ),
-      body: FutureBuilder<List<UserModel>>(
-        future: _usersFuture,
+      body: StreamBuilder<List<UserModel>>(
+        stream: _userStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
