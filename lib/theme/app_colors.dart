@@ -4,6 +4,7 @@ class AppColors {
   // Primary Colors (Blue)
   static const Color primary = Color(0xFF00BF6F); // Skedda green color
   static const Color primaryDark = Color(0xFF0044CC); // Dark Blue
+  static const Color primaryblue = Color.fromARGB(255, 0, 99, 230); // Dark Blue
   static const Color primaryLight = Color(0xFF4D8AFF); // Light Blue
 
   // Secondary Colors (Yellow)

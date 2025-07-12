@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Welcome Back!',
                   style: AppTextStyles.h1.copyWith(
-                    color: AppColors.primary,
+                    color: AppColors.info,
                     fontSize: 32.sp,
                     fontWeight: FontWeight.bold,
                   ),

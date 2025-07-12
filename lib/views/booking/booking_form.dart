@@ -204,6 +204,43 @@ class _BookingFormState extends State<BookingForm> {
     }
   }
 
+  Widget buildDatePickerButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Color(0xFFD1D5DB)), // subtle border
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF), // muted text color
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.calendar_today_outlined,
+              color: Color(0xFF9CA3AF), // muted icon color
+              size: 28,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -230,21 +267,14 @@ class _BookingFormState extends State<BookingForm> {
                     ],
                   ),
                   children: [
-                    const TextSpan(text: 'Book a Meeting Room at\n'),
-                    TextSpan(
-                      text: 'Ignition ',
-                      style: AppTextStyles.h1.copyWith(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22.sp,
-                      ),
-                    ),
-                    TextSpan(
-                      text: widget.branchName,
-                      style: AppTextStyles.h1.copyWith(
-                        color: const Color.fromARGB(255, 191, 38, 0),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 25.sp,
+                    WidgetSpan(
+                      child: Center(
+                        child: Image.asset(
+                          'assets/icons/ignition.png',
+                          height: 200,
+                          width: 200,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ],
@@ -255,16 +285,15 @@ class _BookingFormState extends State<BookingForm> {
                 'Select Date',
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.sp),
               ),
-              SizedBox(height: 8.h),
-              ElevatedButton(
-                onPressed: _pickDate,
-                child: Text(
-                  selectedDate == null
-                      ? 'Choose Date'
-                      : DateFormat('dd-MM-yyyy').format(selectedDate!),
-                ),
+              SizedBox(height: 16.h),
+              buildDatePickerButton(
+                label:
+                    selectedDate == null
+                        ? 'Select date'
+                        : DateFormat('yyyy-MM-dd').format(selectedDate!),
+                onTap: _pickDate,
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 16.h),
               if (selectedDate != null) ...[
                 Text(
                   'Select Time Slot',
@@ -365,9 +394,50 @@ class _BookingFormState extends State<BookingForm> {
                 ),
                 SizedBox(height: 24.h),
               ],
-              ElevatedButton(
-                onPressed: isLoading ? null : _submitBooking,
-                child: isLoading ? CircularProgressIndicator() : Text('Book'),
+              Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.info,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: isLoading ? null : _submitBooking,
+                    child: Center(
+                      child:
+                          isLoading
+                              ? SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                  strokeWidth: 3,
+                                ),
+                              )
+                              : Text(
+                                'Book',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

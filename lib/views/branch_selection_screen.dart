@@ -36,21 +36,21 @@ class BranchSelectionScreen extends StatelessWidget {
                 // SizedBox(height: 14.h),
                 Center(
                   child: SizedBox(
-                    height: 120.w,
-                    width: 120.w,
+                    height: 150.w,
+                    width: 150.w,
                     child: Image.asset(
-                      'assets/icons/ignition.jpeg',
+                      'assets/icons/ignition.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 14.h),
                 Text(
                   'Choose the branch',
                   style: TextStyle(
                     fontSize: 28.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: AppColors.info,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -100,7 +100,7 @@ class _AdminBlockButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 8,
+      elevation: 5,
       color: const Color.fromARGB(255, 241, 240, 240),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
       child: InkWell(
@@ -118,7 +118,7 @@ class _AdminBlockButton extends StatelessWidget {
                   label,
                   style: AppTextStyles.h2.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 19.sp,
+                    fontSize: 20.sp,
                     color: AppColors.text,
                   ),
                   textAlign: TextAlign.center,
@@ -126,15 +126,15 @@ class _AdminBlockButton extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(height: 12.h),
+              // SizedBox(height: 12.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Icon(icon, size: 32.sp, color: AppColors.primaryDark),
+                  Icon(icon, size: 32.sp, color: AppColors.primaryblue),
                   Icon(
                     Icons.arrow_forward_ios,
-                    size: 22.sp,
+                    size: 32.sp,
                     color: AppColors.secondaryDark,
                   ),
                 ],

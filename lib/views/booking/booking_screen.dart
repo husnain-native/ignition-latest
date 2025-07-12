@@ -64,11 +64,12 @@ class _BookingScreenState extends State<BookingScreen> {
                         return Card(
                           elevation: 4,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(4),
+                            
                           ),
                           margin: EdgeInsets.only(bottom: 20.h),
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(4),
                             onTap: () {
                               showDialog(
                                 context: context,
@@ -200,7 +201,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                     children: [
                                       Icon(
                                         Icons.meeting_room,
-                                        color: AppColors.primary,
+                                        color: AppColors.info,
                                         size: 28,
                                       ),
                                       SizedBox(width: 10),
@@ -208,7 +209,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                         child: Text(
                                           booking.branch,
                                           style: AppTextStyles.h2.copyWith(
-                                            color: AppColors.primary,
+                                            color: AppColors.primaryDark,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 20,
                                           ),
@@ -255,7 +256,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                     children: [
                                       Icon(
                                         Icons.calendar_today,
-                                        color: AppColors.warning,
+                                        color: AppColors.secondaryDark,
                                         size: 20,
                                       ),
                                       SizedBox(width: 8),
@@ -266,7 +267,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                       SizedBox(width: 16),
                                       Icon(
                                         Icons.access_time,
-                                        color: AppColors.warning,
+                                        color: AppColors.secondaryDark,
                                         size: 20,
                                       ),
                                       SizedBox(width: 8),
