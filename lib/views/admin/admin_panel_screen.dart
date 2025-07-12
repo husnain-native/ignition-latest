@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart' as share;
 import '../../constants/app_constants.dart';
+import '../../services/notification_service.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final String? branchName;
@@ -70,6 +71,20 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Future<void> _updateStatus(String bookingId, String status) async {
     await BookingService().updateBookingRequestStatus(bookingId, status);
+    // Notify user after status update
+    final allBookings = await BookingService().getAllBookingRequests();
+    final updatedBooking = allBookings.firstWhere(
+      (b) => b.id == bookingId,
+      orElse: () => null as BookingRequest,
+    );
+    if (updatedBooking != null) {
+      await NotificationService.notifyUserOnStatusChange(
+        userId: updatedBooking.userId,
+        branch: updatedBooking.branch,
+        timeSlot: updatedBooking.timeSlot,
+        status: status,
+      );
+    }
     setState(() {
       _futureBookings = BookingService().getAllBookingRequests();
     });

@@ -8,6 +8,8 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../admin/admin_panel_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -151,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                 const Spacer(),
+                const Spacer(),
                 // Row(
                 //   mainAxisAlignment: MainAxisAlignment.center,
                 //   children: [
@@ -218,6 +220,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (result == true &&
                         username == 'admin' &&
                         password == 'admin123') {
+                      // Save admin FCM token
+                      final fcmToken =
+                          await FirebaseMessaging.instance.getToken();
+                      if (fcmToken != null) {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc('admin')
+                            .set({
+                              'role': 'admin',
+                              'fcmToken': fcmToken,
+                              'username': username,
+                            }, SetOptions(merge: true));
+                      }
                       Navigator.pushReplacementNamed(
                         context,
                         AppConstants.adminBranchSelectionRoute,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum AuthStatus { initial, authenticated, unauthenticated, loading, error }
 
@@ -64,6 +66,7 @@ class AuthViewModel extends ChangeNotifier {
       );
       _user = credential.user;
       _userData = await _authService.getCurrentUserData();
+      await saveUserFcmToken();
       _isLoading = false;
       _status = AuthStatus.authenticated;
       notifyListeners();
@@ -114,5 +117,28 @@ class AuthViewModel extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<void> saveUserFcmToken() async {
+    if (_user != null) {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_user!.uid)
+            .update({'fcmToken': fcmToken});
+      }
+    }
+  }
+
+  void listenForFcmTokenRefresh() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      if (_user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_user!.uid)
+            .update({'fcmToken': newToken});
+      }
+    });
   }
 }

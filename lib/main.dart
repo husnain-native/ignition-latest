@@ -107,17 +107,31 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MultiProvider(
           providers: [ChangeNotifierProvider(create: (_) => AuthViewModel())],
-          child: MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: AppConstants.appName,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
-              useMaterial3: true,
-            ),
-            initialRoute: AppConstants.splashRoute,
-            routes: AppRoutes.routes,
-            onGenerateRoute: AppRoutes.onGenerateRoute,
-            onUnknownRoute: AppRoutes.onUnknownRoute,
+          child: Builder(
+            builder: (context) {
+              // Listen for FCM token refresh after the first frame
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final authViewModel = Provider.of<AuthViewModel>(
+                  context,
+                  listen: false,
+                );
+                authViewModel.listenForFcmTokenRefresh();
+              });
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: AppConstants.appName,
+                theme: ThemeData(
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: AppColors.primary,
+                  ),
+                  useMaterial3: true,
+                ),
+                initialRoute: AppConstants.splashRoute,
+                routes: AppRoutes.routes,
+                onGenerateRoute: AppRoutes.onGenerateRoute,
+                onUnknownRoute: AppRoutes.onUnknownRoute,
+              );
+            },
           ),
         );
       },

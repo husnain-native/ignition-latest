@@ -6,6 +6,7 @@ import '../../models/booking_model.dart';
 import '../../services/shared_prefs_service.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_colors.dart';
+import '../../services/notification_service.dart';
 
 class BookingForm extends StatefulWidget {
   final String branchName;
@@ -112,6 +113,12 @@ class _BookingFormState extends State<BookingForm> {
     try {
       print('Saving booking: \\${booking.toMap()}');
       await BookingService().createBookingRequest(booking);
+      // Notify admin after booking request is created
+      await NotificationService.notifyAdminOnBooking(
+        userName: booking.userName,
+        branch: booking.branch,
+        timeSlot: booking.timeSlot,
+      );
       final all = await BookingService().getAllBookingRequests();
       print('All bookings in Hive:');
       for (var b in all) {
