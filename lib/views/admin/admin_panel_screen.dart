@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart' as share;
 import '../../constants/app_constants.dart';
 import '../../services/notification_service.dart';
+import 'package:intl/intl.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final String? branchName;
@@ -78,7 +79,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       orElse: () => null as BookingRequest,
     );
     if (updatedBooking != null) {
-      await NotificationService.notifyUserOnStatusChange(
+      NotificationService.notifyUserOnStatusChange(
         userId: updatedBooking.userId,
         branch: updatedBooking.branch,
         timeSlot: updatedBooking.timeSlot,
@@ -122,35 +123,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               selectedBranch ?? '',
               style: AppTextStyles.h2.copyWith(color: AppColors.warning),
             ),
-            // actions: [
-            //   IconButton(
-            //     icon: Icon(Icons.download, color: AppColors.primary),
-            //     tooltip: 'Export as JSON',
-            //     onPressed: () async {
-            //       final box = await Hive.openBox<BookingRequest>('bookingsBox');
-            //       final allBookings = box.values.toList();
-            //       final jsonList = allBookings.map((b) => b.toMap()).toList();
-            //       final jsonString = jsonEncode(jsonList);
 
-            //       Directory? exportDir;
-            //       if (Platform.isAndroid) {
-            //         exportDir = await getExternalStorageDirectory();
-            //       } else if (Platform.isIOS) {
-            //         exportDir = await getApplicationDocumentsDirectory();
-            //       }
-
-            //       final file = File('${exportDir!.path}/bookings_export.json');
-            //       await file.writeAsString(jsonString);
-
-            //       print('Export path: ${file.path}');
-            //       ScaffoldMessenger.of(context).showSnackBar(
-            //         SnackBar(
-            //           content: Text('Bookings exported to ${file.path}'),
-            //         ),
-            //       );
-            //     },
-            //   ),
-            // ],
             bottom: PreferredSize(
               preferredSize: Size.fromHeight(48.0),
               child: SingleChildScrollView(
@@ -198,6 +171,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     ),
                     SizedBox(width: 8.w),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.info,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: BorderSide(color: AppColors.primaryDark, width: 2 )
+                        )
+                      ),
                       onPressed: () {
                         setState(() {
                           _searchQuery =
@@ -220,12 +201,44 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       return Center(child: Text('No booking requests.'));
                     }
                     final bookings = snapshot.data!;
+                    // Filter out bookings whose slot time is more than 24 hours in the past
+                    final now = DateTime.now();
                     final filteredBookings =
-                        selectedBranch == null
-                            ? bookings
-                            : bookings
-                                .where((b) => b.branch == selectedBranch)
-                                .toList();
+                        bookings.where((booking) {
+                          // Parse booking.date (yyyy-MM-dd) and booking.timeSlot (e.g., '10:00 AM - 11:00 AM')
+                          try {
+                            final date = DateTime.parse(booking.date);
+                            final timeParts = booking.timeSlot.split(' - ');
+                            if (timeParts.length != 2)
+                              return true; // keep if can't parse
+                            final endTimeStr = timeParts[1];
+                            final endTime = TimeOfDay(
+                              hour: int.parse(
+                                DateFormat(
+                                  'hh:mm a',
+                                ).parse(endTimeStr).hour.toString(),
+                              ),
+                              minute: int.parse(
+                                DateFormat(
+                                  'hh:mm a',
+                                ).parse(endTimeStr).minute.toString(),
+                              ),
+                            );
+                            final slotEnd = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              endTime.hour,
+                              endTime.minute,
+                            );
+                            // Only keep if slotEnd is in the future or within the last 24 hours
+                            return slotEnd.isAfter(
+                              now.subtract(Duration(hours: 24)),
+                            );
+                          } catch (e) {
+                            return true; // keep if parsing fails
+                          }
+                        }).toList();
                     final sortedBookings = List<BookingRequest>.from(
                       filteredBookings,
                     )..sort((a, b) => b.id.compareTo(a.id));
@@ -304,13 +317,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return Card(
           elevation: 4,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(6.r),
+            side: BorderSide(
+              color: AppColors.info
+            )
           ),
           margin: EdgeInsets.only(bottom: 20.h),
+          color: Colors.white,
           child:
               booking.status == 'booked'
                   ? InkWell(
                     borderRadius: BorderRadius.circular(16.r),
+                    
                     onTap: () {
                       showDialog(
                         context: context,
@@ -367,7 +385,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                                           ),
                                         ),
                                         onPressed: () async {
-                                          await _updateStatus(
+                                           _updateStatus(
                                             booking.id,
                                             'rejected',
                                           );
@@ -375,6 +393,116 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                                         },
                                         child: Text(
                                           'Reject',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: AppColors.primaryDark,
+                                            width: 2,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        onPressed:
+                                            () => Navigator.of(context).pop(),
+                                        child: Text(
+                                          'No',
+                                          style: TextStyle(
+                                            color: AppColors.primaryDark,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: _buildBookingCardContent(
+                      booking,
+                      highlight: isMatch,
+                    ),
+                  )
+                  : booking.status == 'rejected'
+                  ? InkWell(
+                    borderRadius: BorderRadius.circular(16.r),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return Dialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 8,
+                            backgroundColor: Colors.white,
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: AppColors.info,
+                                    size: 48,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Accept Booking?',
+                                    style: AppTextStyles.h2.copyWith(
+                                      color: AppColors.info,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Do you want to accept this booking? The user will be notified.',
+                                    style: AppTextStyles.body2.copyWith(
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 24),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.green,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        onPressed: () async {
+                                          _updateStatus(booking.id, 'booked');
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text(
+                                          'Accept',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
@@ -508,13 +636,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.meeting_room, color: AppColors.primary, size: 28.sp),
+              Icon(Icons.meeting_room, color: AppColors.info, size: 28.sp),
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
                   booking.branch,
                   style: AppTextStyles.h2.copyWith(
-                    color: AppColors.primary,
+                    color: AppColors.info,
                     fontWeight: FontWeight.bold,
                     fontSize: 20.sp,
                   ),

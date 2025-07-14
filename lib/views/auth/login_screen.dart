@@ -157,6 +157,19 @@ class _LoginScreenState extends State<LoginScreen> {
                
                 SizedBox(height: 16),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 242, 246, 247),
+                    foregroundColor: AppColors.info,
+                    
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      side: BorderSide(
+                        color: AppColors.primaryLight,
+                        width: 1
+                      )
+                      
+                    )
+                  ),
                   onPressed: () async {
                     String username = '';
                     String password = '';

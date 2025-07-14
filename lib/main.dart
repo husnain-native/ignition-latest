@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'models/booking_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 
 Future<void> main() async {
   try {
@@ -20,6 +21,14 @@ Future<void> main() async {
     Hive.registerAdapter(BookingRequestAdapter());
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Set system navigation bar color
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.black,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
     );
 
     // Initialize flutter_local_notifications

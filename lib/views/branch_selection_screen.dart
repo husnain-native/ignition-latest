@@ -30,7 +30,7 @@ class BranchSelectionScreen extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(24.w),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // SizedBox(height: 14.h),
@@ -107,13 +107,14 @@ class _AdminBlockButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(18.r),
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 18.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: EdgeInsets.only(top: 8.h, left: 4.w, right: 4.w),
+              Icon(icon, size: 32.sp, color: AppColors.primaryblue),
+              SizedBox(width: 16.w),
+              Expanded(
                 child: Text(
                   label,
                   style: AppTextStyles.h2.copyWith(
@@ -121,23 +122,14 @@ class _AdminBlockButton extends StatelessWidget {
                     fontSize: 20.sp,
                     color: AppColors.text,
                   ),
-                  textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // SizedBox(height: 12.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Icon(icon, size: 32.sp, color: AppColors.primaryblue),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 32.sp,
-                    color: AppColors.secondaryDark,
-                  ),
-                ],
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 24.sp,
+                color: AppColors.secondaryDark,
               ),
             ],
           ),

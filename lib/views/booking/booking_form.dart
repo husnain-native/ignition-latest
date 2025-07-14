@@ -47,6 +47,25 @@ class _BookingFormState extends State<BookingForm> {
       initialDate: selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 6)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.info, // header & selected date background
+              onPrimary: Colors.white, // header text & selected date text
+              surface: const Color.fromARGB(255, 219, 233, 250), // dialog background
+              onSurface: Colors.black, // default text color
+            ),
+            dialogBackgroundColor: AppColors.background,
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.info, // button text color (OK/Cancel)
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -114,7 +133,7 @@ class _BookingFormState extends State<BookingForm> {
       print('Saving booking: \\${booking.toMap()}');
       await BookingService().createBookingRequest(booking);
       // Notify admin after booking request is created
-      await NotificationService.notifyAdminOnBooking(
+      NotificationService.notifyAdminOnBooking(
         userName: booking.userName,
         branch: booking.branch,
         timeSlot: booking.timeSlot,
@@ -149,7 +168,7 @@ class _BookingFormState extends State<BookingForm> {
                     Icon(
                       Icons.check_circle_rounded,
                       size: 64.sp,
-                      color: const Color.fromARGB(255, 22, 209, 53),
+                      color: const Color.fromARGB(255, 25, 94, 8),
                     ),
                     SizedBox(height: 18.h),
                     Text(
@@ -166,12 +185,7 @@ class _BookingFormState extends State<BookingForm> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            33,
-                            175,
-                            40,
-                          ),
+                          backgroundColor: AppColors.info,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -232,7 +246,7 @@ class _BookingFormState extends State<BookingForm> {
             ),
             Icon(
               Icons.calendar_today_outlined,
-              color: Color(0xFF9CA3AF), // muted icon color
+              color: Color.fromARGB(255, 91, 118, 173), // muted icon color
               size: 28,
             ),
           ],
@@ -267,23 +281,24 @@ class _BookingFormState extends State<BookingForm> {
                     ],
                   ),
                   children: [
-                    WidgetSpan(
-                      child: Center(
-                        child: Image.asset(
-                          'assets/icons/ignition.png',
-                          height: 200,
-                          width: 200,
-                          fit: BoxFit.contain,
+                    if (selectedDate == null)
+                      WidgetSpan(
+                        child: Center(
+                          child: Image.asset(
+                            'assets/icons/ignition.png',
+                            height: 200,
+                            width: 200,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
-              SizedBox(height: 24.h),
+              if (selectedDate == null) SizedBox(height: 24.h),
               Text(
                 'Select Date',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.sp),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17.sp),
               ),
               SizedBox(height: 16.h),
               buildDatePickerButton(
@@ -298,8 +313,9 @@ class _BookingFormState extends State<BookingForm> {
                 Text(
                   'Select Time Slot',
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.info,
+                    fontSize: 17.sp,
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -343,26 +359,48 @@ class _BookingFormState extends State<BookingForm> {
                             return !isBooked && !isPast;
                           })
                           .map((slot) {
-                            return ChoiceChip(
-                              label: Text(
-                                slot,
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              selected: selectedTimeSlot == slot,
-                              onSelected: (selected) {
+                            final isSelected = selectedTimeSlot == slot;
+                            return GestureDetector(
+                              onTap: () {
                                 setState(() {
-                                  selectedTimeSlot = selected ? slot : null;
+                                  selectedTimeSlot = isSelected ? null : slot;
                                 });
                               },
-                              selectedColor: Colors.green,
-                              backgroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 10.h,
+                              child: Container(
+                                margin: EdgeInsets.all(2.w),
+                                width: double.infinity,
+                                height: 44.h,
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? AppColors.info
+                                          : Colors.white,
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? AppColors.info
+                                            : const Color.fromARGB(
+                                              255,
+                                              31,
+                                              74,
+                                              160,
+                                            ),
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  slot,
+                                  style: TextStyle(
+                                    color:
+                                        isSelected
+                                            ? Colors.white
+                                            : Color.fromARGB(255, 22, 56, 124),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11.sp,
+                                  ),
+                                ),
                               ),
                             );
                           })
@@ -429,7 +467,9 @@ class _BookingFormState extends State<BookingForm> {
                               : Text(
                                 'Book',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color:
+                                      Colors
+                                          .white, // Ensure text is always white
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
                                   letterSpacing: 1.2,

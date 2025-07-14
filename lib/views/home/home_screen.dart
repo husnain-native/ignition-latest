@@ -65,28 +65,103 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         body: body,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) {
+        bottomNavigationBar: SafeArea(
+          child: customBottomNavBar(_selectedIndex, (index) {
             setState(() {
               _selectedIndex = index;
             });
-          },
-          destinations: [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined, color: AppColors.primary),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.calendar_today_outlined, color: AppColors.text),
-              label: 'Bookings',
-            ),
-            // NavigationDestination(
-            //   icon: Icon(Icons.settings_outlined, color: AppColors.text),
-            //   label: 'Settings',
-            // ),
-          ],
+          }),
         ),
+      ),
+    );
+  }
+
+  Widget customBottomNavBar(int selectedIndex, Function(int) onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.info,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromARGB(31, 2, 49, 204),
+            blurRadius: 20,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(vertical: 20, horizontal: 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Meetings (Home)
+          GestureDetector(
+            onTap: () => onTap(0),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    selectedIndex == 0 ?Color(0xFFE6F0FF) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.home_filled,
+                    color:
+                        selectedIndex == 0
+                            ? Color(0xFF2563EB)
+                            : Color(0xFFFFFFFF),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    "Home",
+                    style: TextStyle(
+                      color:
+                          selectedIndex == 0
+                              ? Color(0xFF2563EB)
+                              : Color(0xFFFFFFFF),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Bookings
+          GestureDetector(
+            onTap: () => onTap(1),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    selectedIndex == 1 ? Color(0xFFE6F0FF) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.list_alt,
+                    color:
+                        selectedIndex == 1
+                            ? Color(0xFF2563EB)
+                            : Color(0xFFFFFFFF),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    "Bookings",
+                    style: TextStyle(
+                      color:
+                          selectedIndex == 1
+                              ? Color(0xFF2563EB)
+                              : Color(0xFFFFFFFF),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

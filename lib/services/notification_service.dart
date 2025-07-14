@@ -85,4 +85,27 @@ class NotificationService {
       );
     }
   }
+
+  static Future<void> notifyAdminOnCancellation({
+    required String userName,
+    required String branch,
+    required String timeSlot,
+    required String date,
+  }) async {
+    final adminTokensSnapshot =
+        await FirebaseFirestore.instance.collection('admin_devices').get();
+    final adminFcmTokens =
+        adminTokensSnapshot.docs
+            .map((doc) => doc.data()['fcmToken'])
+            .where((token) => token != null)
+            .toList();
+    for (final adminFcmToken in adminFcmTokens) {
+      await sendNotificationToBackend(
+        serverUrl: 'https://fcm-backend-2.onrender.com',
+        targetFcmToken: adminFcmToken,
+        title: '[$branch] ❌ Booking Cancelled',
+        body: 'User: $userName\nTime Slot: $timeSlot\nDate: $date',
+      );
+    }
+  }
 }
