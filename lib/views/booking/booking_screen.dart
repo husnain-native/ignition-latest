@@ -198,8 +198,13 @@ class _BookingScreenState extends State<BookingScreen> {
                           final now = DateTime.now();
                           List<BookingRequest> sortedBookings = [];
                           if (_selectedFilter == 'all') {
-                            sortedBookings = List.from(bookings)
-                              ..sort((a, b) => b.date.compareTo(a.date));
+                            sortedBookings = List.from(bookings)..sort((a, b) {
+                              if (a.createdAt != null && b.createdAt != null) {
+                                return b.createdAt!.compareTo(a.createdAt!);
+                              } else {
+                                return b.id.compareTo(a.id);
+                              }
+                            });
                           } else if (_selectedFilter == 'closest_to_today') {
                             sortedBookings =
                                 bookings.where((b) {
@@ -513,7 +518,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                                                             .id,
                                                                         'cancelled',
                                                                       );
-                                                                  NotificationService.notifyAdminOnBooking(
+                                                                  NotificationService.notifyAdminOnCancellation(
                                                                     userName:
                                                                         booking
                                                                             .userName,

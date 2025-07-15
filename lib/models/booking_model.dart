@@ -75,6 +75,8 @@ class BookingRequest {
   final String timeSlot;
   @HiveField(8)
   final String status; // pending, booked, rejected
+  @HiveField(9)
+  final String? createdAt;
 
   BookingRequest({
     required this.id,
@@ -86,14 +88,15 @@ class BookingRequest {
     required this.date,
     required this.timeSlot,
     required this.status,
+    this.createdAt,
   });
 
-  factory BookingRequest.fromMap(Map<String, dynamic> map, String id) {
+  factory BookingRequest.fromMap(Map<String, dynamic> map, [String? id]) {
     String status = map['status'] ?? 'pending';
     if (status == 'accepted') status = 'booked';
     if (status == 'denied') status = 'rejected';
     return BookingRequest(
-      id: id,
+      id: id ?? map['id'] ?? '',
       userId: map['userId'] ?? '',
       userName: map['userName'] ?? '',
       email: map['email'] ?? '',
@@ -102,6 +105,7 @@ class BookingRequest {
       date: map['date'] ?? '',
       timeSlot: map['timeSlot'] ?? '',
       status: status,
+      createdAt: map['createdAt'],
     );
   }
 
@@ -115,6 +119,7 @@ class BookingRequest {
       'date': date,
       'timeSlot': timeSlot,
       'status': status,
+      if (createdAt != null) 'createdAt': createdAt,
     };
   }
 }

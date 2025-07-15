@@ -53,13 +53,19 @@ class _BookingFormState extends State<BookingForm> {
             colorScheme: ColorScheme.light(
               primary: AppColors.info, // header & selected date background
               onPrimary: Colors.white, // header text & selected date text
-              surface: const Color.fromARGB(255, 219, 233, 250), // dialog background
+              surface: const Color.fromARGB(
+                255,
+                219,
+                233,
+                250,
+              ), // dialog background
               onSurface: Colors.black, // default text color
             ),
             dialogBackgroundColor: AppColors.background,
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.info, // button text color (OK/Cancel)
+                foregroundColor:
+                    AppColors.info, // button text color (OK/Cancel)
               ),
             ),
           ),
@@ -128,6 +134,7 @@ class _BookingFormState extends State<BookingForm> {
       date: DateFormat('yyyy-MM-dd').format(selectedDate!),
       timeSlot: selectedTimeSlot!,
       status: 'pending',
+      createdAt: DateTime.now().toIso8601String(),
     );
     try {
       print('Saving booking: \\${booking.toMap()}');
