@@ -82,7 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   margin: EdgeInsets.symmetric(vertical: 14.h),
                  
                   child: Image.asset(
-                    'assets/icons/ignition.jpeg',
+                    'assets/icons/ignition.png',
                     fit: BoxFit.contain,
                   ),
                 ),

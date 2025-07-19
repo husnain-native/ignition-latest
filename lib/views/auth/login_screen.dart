@@ -62,13 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Spacer(flex: 1),
+                SizedBox(height: 20.h),
                 Container(
-                  width: 120.w,
-                  height: 120.w,
+                  width: 150.w,
+                  height: 150.h,
                   margin: EdgeInsets.only(bottom: 24.h),
                   child: Image.asset(
-                    'assets/icons/ignition.jpeg',
+                    'assets/icons/ignition.png',
                     fit: BoxFit.contain,
                   ),
                 ),

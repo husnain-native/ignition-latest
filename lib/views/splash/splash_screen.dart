@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/icons/ignition.jpeg', height: 120.h),
+            Image.asset('assets/icons/ignition.png', height: 120.h),
             SizedBox(height: 24.h),
             const CircularProgressIndicator(),
           ],

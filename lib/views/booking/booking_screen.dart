@@ -192,7 +192,20 @@ class _BookingScreenState extends State<BookingScreen> {
                             return Center(child: CircularProgressIndicator());
                           }
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return Center(child: Text('No bookings found.'));
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/nothing.png',
+                                    width: 180,
+                                    height: 180,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text('No bookings found.'),
+                                ],
+                              ),
+                            );
                           }
                           final bookings = snapshot.data!;
                           final now = DateTime.now();
@@ -245,7 +258,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             itemBuilder: (context, index) {
                               final booking = sortedBookings[index];
                               return Card(
-                                elevation: 1,
+                                elevation: 2,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(5),
                                   side: BorderSide(
@@ -253,7 +266,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                     width: 1,
                                   ),
                                 ),
-                                color: AppColors.info,
+                                color: AppColors.booked,
                                 margin: EdgeInsets.only(bottom: 20.h),
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(16),
@@ -349,6 +362,9 @@ class _BookingScreenState extends State<BookingScreen> {
                                                                             .id,
                                                                         'cancelled',
                                                                       );
+                                                                  print(
+                                                                    'Calling notifyAdminOnCancellation for booked cancellation',
+                                                                  );
                                                                   NotificationService.notifyAdminOnCancellation(
                                                                     userName:
                                                                         booking
@@ -518,6 +534,9 @@ class _BookingScreenState extends State<BookingScreen> {
                                                                             .id,
                                                                         'cancelled',
                                                                       );
+                                                                  print(
+                                                                    'Calling notifyAdminOnCancellation for pending cancellation',
+                                                                  );
                                                                   NotificationService.notifyAdminOnCancellation(
                                                                     userName:
                                                                         booking
@@ -611,7 +630,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                           children: [
                                             Icon(
                                               Icons.meeting_room,
-                                              color: AppColors.background,
+                                              color: AppColors.info,
                                               size: 28,
                                             ),
                                             SizedBox(width: 10),
@@ -620,8 +639,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                                 booking.branch,
                                                 style: AppTextStyles.h2
                                                     .copyWith(
-                                                      color:
-                                                          AppColors.background,
+                                                      color: AppColors.info,
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 20,
@@ -679,12 +697,13 @@ class _BookingScreenState extends State<BookingScreen> {
                                             vertical: 10,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.secondaryDark,
+                                            color: AppColors.booked,
                                             borderRadius: BorderRadius.circular(
                                               0,
                                             ),
                                             border: Border.all(
                                               color: AppColors.secondaryDark,
+                                              width: 2,
                                             ),
                                           ),
                                           child: Row(
@@ -722,12 +741,13 @@ class _BookingScreenState extends State<BookingScreen> {
                                             vertical: 10,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.secondaryDark,
+                                            color: AppColors.booked,
                                             borderRadius: BorderRadius.circular(
                                               0,
                                             ),
                                             border: Border.all(
                                               color: AppColors.secondaryDark,
+                                              width: 2,
                                             ),
                                           ),
                                           child: Row(
