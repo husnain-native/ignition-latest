@@ -47,4 +47,20 @@ exports.notifyUserOnStatusChange = functions.firestore
         });
       }
     }
-  }); 
+  });
+
+app.post('/delete-user', async (req, res) => {
+  const { uid } = req.body;
+  if (!uid) {
+    return res.status(400).json({ success: false, error: 'Missing uid' });
+  }
+  try {
+    // Delete from Firebase Authentication
+    await admin.auth().deleteUser(uid);
+    // Delete from Firestore
+    await admin.firestore().collection('users').doc(uid).delete();
+    res.json({ success: true, message: `User ${uid} deleted from Auth and Firestore.` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}); 

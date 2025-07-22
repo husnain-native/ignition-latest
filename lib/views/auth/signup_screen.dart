@@ -58,7 +58,10 @@ class _SignupScreenState extends State<SignupScreen> {
         phoneNumber: _phoneController.text.trim(),
       );
       if (success && mounted) {
-        Navigator.pushReplacementNamed(context, '/branch-selection');
+        Navigator.pushReplacementNamed(
+          context,
+          AppConstants.adminBranchSelectionRoute,
+        );
       }
     }
   }
@@ -80,7 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   width: 120.w,
                   height: 120.w,
                   margin: EdgeInsets.symmetric(vertical: 14.h),
-                 
+
                   child: Image.asset(
                     'assets/icons/ignition.png',
                     fit: BoxFit.contain,

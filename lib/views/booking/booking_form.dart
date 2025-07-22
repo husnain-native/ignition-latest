@@ -124,6 +124,90 @@ class _BookingFormState extends State<BookingForm> {
       isLoading = true;
     });
     final userId = await SharedPrefsService.getUserId();
+    final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate!);
+    // Fetch all bookings for this user and date
+    final allBookings = await BookingService().getUserBookingRequests(
+      userId ?? '',
+    );
+    final todaysBookings =
+        allBookings
+            .where(
+              (b) =>
+                  b.date == dateStr &&
+                  (b.status == 'pending' || b.status == 'booked'),
+            )
+            .toList();
+    if (todaysBookings.length >= 3) {
+      setState(() {
+        isLoading = false;
+      });
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder:
+            (context) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 32.h, horizontal: 24.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64.sp,
+                      color: AppColors.error,
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      'Booking Limit Reached',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      'You can only book a maximum of 3 slots for a single day.',
+                      style: AppTextStyles.body1.copyWith(
+                        color: Colors.black87,
+                        fontSize: 16.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.info,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'OK',
+                          style: AppTextStyles.h3.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
+      return;
+    }
     final booking = BookingRequest(
       id: '',
       userId: userId ?? '',
@@ -131,7 +215,7 @@ class _BookingFormState extends State<BookingForm> {
       email: email ?? '',
       phone: phone ?? '',
       branch: widget.branchName,
-      date: DateFormat('yyyy-MM-dd').format(selectedDate!),
+      date: dateStr,
       timeSlot: selectedTimeSlot!,
       status: 'pending',
       createdAt: DateTime.now().toIso8601String(),

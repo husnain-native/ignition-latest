@@ -6,6 +6,8 @@ import 'package:ignition/theme/app_text_styles.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({Key? key}) : super(key: key);
@@ -32,8 +34,26 @@ class _UserListScreenState extends State<UserListScreen> {
   }
 
   Future<void> _deleteUser(String userId) async {
-    await AuthService().deleteUser(userId);
-    // No need to update state, StreamBuilder will auto-update
+    final url = 'https://fcm-backend-q97m.onrender.com/delete-user';
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'uid': userId}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('User deleted successfully.')));
+      } else {
+        throw Exception(data['error'] ?? 'Failed to delete user');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   void _showDeleteDialog(UserModel user) {
@@ -42,9 +62,7 @@ class _UserListScreenState extends State<UserListScreen> {
       builder:
           (context) => AlertDialog(
             title: Text('Delete User'),
-            content: Text(
-              'Are you sure you want to delete ${user.fullName}?',
-            ),
+            content: Text('Are you sure you want to delete ${user.fullName}?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),

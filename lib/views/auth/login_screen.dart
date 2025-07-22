@@ -156,90 +156,139 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Spacer(),
                
                 SizedBox(height: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 242, 246, 247),
-                    foregroundColor: AppColors.info,
-                    
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      side: BorderSide(
-                        color: AppColors.primaryLight,
-                        width: 1
-                      )
-                      
-                    )
-                  ),
-                  onPressed: () async {
-                    String username = '';
-                    String password = '';
-                    bool? result = await showDialog<bool>(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text('Admin Login'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextField(
-                                decoration: InputDecoration(
-                                  labelText: 'Username',
-                                ),
-                                onChanged: (value) => username = value,
-                              ),
-                              TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                ),
-                                onChanged: (value) => password = value,
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text('OK'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                    if (result == true &&
-                        username == 'admin' &&
-                        password == 'admin123') {
-                      // Save admin FCM token for each device separately
-                      final fcmToken =
-                          await FirebaseMessaging.instance.getToken();
-                      if (fcmToken != null) {
-                        await FirebaseFirestore.instance
-                            .collection('admin_devices')
-                            .doc(fcmToken)
-                            .set({
-                              'role': 'admin',
-                              'fcmToken': fcmToken,
-                              'username': username,
-                              'createdAt': FieldValue.serverTimestamp(),
-                            }, SetOptions(merge: true));
-                      }
-                      Navigator.pushReplacementNamed(
-                        context,
-                        AppConstants.adminBranchSelectionRoute,
-                      );
-                    } else if (result == true) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Incorrect admin username or password'),
+              ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          242,
+                          246,
+                          247,
                         ),
-                      );
-                    }
-                  },
-                  child: Text('Admin'),
-                ),
+                        foregroundColor: AppColors.info,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: BorderSide(
+                            color: AppColors.primaryLight,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      onPressed: () async {
+                        String username = '';
+                        String password = '';
+                        final _formKey = GlobalKey<FormState>();
+                        bool? result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              backgroundColor: Colors.grey[100],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              title: Column(
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/ignition.png', // Use your logo path
+                                    height: 48,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Admin Login',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              content: Form(
+                                key: _formKey,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextFormField(
+                                      decoration: InputDecoration(
+                                        labelText: 'Username',
+                                      ),
+                                      onChanged: (value) => username = value,
+                                      validator:
+                                          (value) =>
+                                              value == null || value.isEmpty
+                                                  ? 'Enter username'
+                                                  : null,
+                                    ),
+                                    TextFormField(
+                                      obscureText: true,
+                                      decoration: InputDecoration(
+                                        labelText: 'Password',
+                                      ),
+                                      onChanged: (value) => password = value,
+                                      validator:
+                                          (value) =>
+                                              value == null || value.isEmpty
+                                                  ? 'Enter password'
+                                                  : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                  child: Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    if ((_formKey.currentState?.validate() ??
+                                        false)) {
+                                      Navigator.pop(context, true);
+                                    }
+                                  },
+                                  child: Text('Login'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                        if (result == true &&
+                            username == 'admin' &&
+                            password == 'admin123') {
+                          final fcmToken =
+                              await FirebaseMessaging.instance.getToken();
+                          if (fcmToken != null) {
+                            await FirebaseFirestore.instance
+                                .collection('admin_devices')
+                                .doc(fcmToken)
+                                .set({
+                                  'role': 'admin',
+                                  'fcmToken': fcmToken,
+                                  'username': username,
+                                  'createdAt': FieldValue.serverTimestamp(),
+                                }, SetOptions(merge: true));
+                          }
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppConstants.adminBranchSelectionRoute,
+                          );
+                        } else if (result == true) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Incorrect admin username or password',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      child: Text('Admin'),
+                    ),
               ],
             ),
           ),

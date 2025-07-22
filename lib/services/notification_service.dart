@@ -76,7 +76,7 @@ class NotificationService {
           emoji = 'ℹ️';
           statusText = status;
       }
-      await sendNotificationToBackend(
+       sendNotificationToBackend(
         serverUrl: 'https://fcm-backend-2.onrender.com',
         targetFcmToken: userFcmToken,
         title: '[$branch] $emoji $statusText',

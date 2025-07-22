@@ -252,6 +252,22 @@ class _BookingScreenState extends State<BookingScreen> {
                                     .where((b) => b.status == 'rejected')
                                     .toList();
                           }
+                          if (sortedBookings.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/nothing.png',
+                                    width: 180,
+                                    height: 180,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text('No bookings found.'),
+                                ],
+                              ),
+                            );
+                          }
                           return ListView.builder(
                             padding: EdgeInsets.all(16.w),
                             itemCount: sortedBookings.length,
@@ -274,349 +290,438 @@ class _BookingScreenState extends State<BookingScreen> {
                                       booking.status == 'booked' ||
                                               booking.status == 'pending'
                                           ? () async {
-                                            if (booking.status == 'booked') {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return Dialog(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            20,
-                                                          ),
-                                                    ),
-                                                    elevation: 8,
-                                                    backgroundColor:
-                                                        Colors.white,
-                                                    child: Padding(
-                                                      padding: EdgeInsets.all(
-                                                        24,
-                                                      ),
-                                                      child: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Icon(
-                                                            Icons
-                                                                .warning_amber_rounded,
-                                                            color:
-                                                                AppColors.error,
-                                                            size: 48,
-                                                          ),
-                                                          SizedBox(height: 16),
-                                                          Text(
-                                                            'Cancel Booking?',
-                                                            style: AppTextStyles
-                                                                .h2
-                                                                .copyWith(
-                                                                  color:
-                                                                      AppColors
-                                                                          .error,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 22,
-                                                                ),
-                                                          ),
-                                                          SizedBox(height: 12),
-                                                          Text(
-                                                            'Are you sure you want to cancel this booking? This action cannot be undone.',
-                                                            style: AppTextStyles
-                                                                .body2
-                                                                .copyWith(
-                                                                  fontSize: 16,
-                                                                ),
-                                                            textAlign:
-                                                                TextAlign
-                                                                    .center,
-                                                          ),
-                                                          SizedBox(height: 24),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceEvenly,
-                                                            children: [
-                                                              ElevatedButton(
-                                                                style: ElevatedButton.styleFrom(
-                                                                  backgroundColor:
-                                                                      AppColors
-                                                                          .error,
-                                                                  shape: RoundedRectangleBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          12,
-                                                                        ),
-                                                                  ),
-                                                                  padding:
-                                                                      EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            24,
-                                                                        vertical:
-                                                                            12,
-                                                                      ),
-                                                                ),
-                                                                onPressed: () async {
-                                                                  await BookingService()
-                                                                      .updateBookingRequestStatus(
-                                                                        booking
-                                                                            .id,
-                                                                        'cancelled',
-                                                                      );
-                                                                  print(
-                                                                    'Calling notifyAdminOnCancellation for booked cancellation',
-                                                                  );
-                                                                  NotificationService.notifyAdminOnCancellation(
-                                                                    userName:
-                                                                        booking
-                                                                            .userName,
-                                                                    branch:
-                                                                        booking
-                                                                            .branch,
-                                                                    timeSlot:
-                                                                        booking
-                                                                            .timeSlot,
-                                                                    date:
-                                                                        booking
-                                                                            .date,
-                                                                  );
-                                                                  Navigator.of(
-                                                                    context,
-                                                                  ).pop();
-                                                                  setState(
-                                                                    () {},
-                                                                  );
-                                                                },
-                                                                child: Text(
-                                                                  'Yes, Cancel',
-                                                                  style: TextStyle(
-                                                                    color:
-                                                                        Colors
-                                                                            .white,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              OutlinedButton(
-                                                                style: OutlinedButton.styleFrom(
-                                                                  side: BorderSide(
-                                                                    color:
-                                                                        AppColors
-                                                                            .primaryDark,
-                                                                    width: 2,
-                                                                  ),
-                                                                  shape: RoundedRectangleBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          12,
-                                                                        ),
-                                                                  ),
-                                                                  padding:
-                                                                      EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            24,
-                                                                        vertical:
-                                                                            12,
-                                                                      ),
-                                                                ),
-                                                                onPressed:
-                                                                    () =>
-                                                                        Navigator.of(
-                                                                          context,
-                                                                        ).pop(),
-                                                                child: Text(
-                                                                  'No',
-                                                                  style: TextStyle(
-                                                                    color:
-                                                                        AppColors
-                                                                            .primaryDark,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
+                                            final bookingDate =
+                                                DateTime.tryParse(booking.date);
+                                            final now = DateTime.now();
+                                            bool canCancel = false;
+                                            if (bookingDate != null) {
+                                              final today = DateTime(
+                                                now.year,
+                                                now.month,
+                                                now.day,
                                               );
-                                            } else if (booking.status ==
-                                                'pending') {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return Dialog(
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            20,
-                                                          ),
-                                                    ),
-                                                    elevation: 8,
-                                                    backgroundColor:
-                                                        Colors.white,
-                                                    child: Padding(
-                                                      padding: EdgeInsets.all(
-                                                        24,
+                                              if (bookingDate.isAfter(today)) {
+                                                // Future date, can cancel
+                                                canCancel = true;
+                                              } else if (bookingDate
+                                                  .isAtSameMomentAs(today)) {
+                                                // Today: check time
+                                                // Try to parse the end time from booking.timeSlot
+                                                String endTimeStr = '';
+                                                if (booking.timeSlot.contains(
+                                                  '-',
+                                                )) {
+                                                  endTimeStr =
+                                                      booking.timeSlot
+                                                          .split('-')
+                                                          .last
+                                                          .trim();
+                                                }
+                                                DateTime? bookingEndDateTime;
+                                                try {
+                                                  // Try parsing as 24h (e.g., '14:00')
+                                                  bookingEndDateTime =
+                                                      DateTime.parse(
+                                                        '${booking.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                                      );
+                                                } catch (_) {
+                                                  // Try parsing as 12h (e.g., '2:00 PM')
+                                                  try {
+                                                    final time = TimeOfDay(
+                                                      hour: int.parse(
+                                                        endTimeStr.split(
+                                                          ':',
+                                                        )[0],
                                                       ),
-                                                      child: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Icon(
-                                                            Icons
-                                                                .warning_amber_rounded,
-                                                            color:
-                                                                AppColors.error,
-                                                            size: 48,
-                                                          ),
-                                                          SizedBox(height: 16),
-                                                          Text(
-                                                            'Cancel Booking Request?',
-                                                            style: AppTextStyles
-                                                                .h2
-                                                                .copyWith(
-                                                                  color:
-                                                                      AppColors
-                                                                          .error,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 22,
-                                                                ),
-                                                          ),
-                                                          SizedBox(height: 12),
-                                                          Text(
-                                                            'Are you sure you want to cancel this booking request? This action cannot be undone.',
-                                                            style: AppTextStyles
-                                                                .body2
-                                                                .copyWith(
-                                                                  fontSize: 16,
-                                                                ),
-                                                            textAlign:
-                                                                TextAlign
-                                                                    .center,
-                                                          ),
-                                                          SizedBox(height: 24),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceEvenly,
-                                                            children: [
-                                                              ElevatedButton(
-                                                                style: ElevatedButton.styleFrom(
-                                                                  backgroundColor:
-                                                                      AppColors
-                                                                          .error,
-                                                                  shape: RoundedRectangleBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          12,
-                                                                        ),
-                                                                  ),
-                                                                  padding:
-                                                                      EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            24,
-                                                                        vertical:
-                                                                            12,
-                                                                      ),
-                                                                ),
-                                                                onPressed: () async {
-                                                                  await BookingService()
-                                                                      .updateBookingRequestStatus(
-                                                                        booking
-                                                                            .id,
-                                                                        'cancelled',
-                                                                      );
-                                                                  print(
-                                                                    'Calling notifyAdminOnCancellation for pending cancellation',
-                                                                  );
-                                                                  NotificationService.notifyAdminOnCancellation(
-                                                                    userName:
-                                                                        booking
-                                                                            .userName,
-                                                                    branch:
-                                                                        booking
-                                                                            .branch,
-                                                                    timeSlot:
-                                                                        booking
-                                                                            .timeSlot,
-                                                                    date:
-                                                                        booking
-                                                                            .date,
-                                                                  );
-                                                                  Navigator.of(
-                                                                    context,
-                                                                  ).pop();
-                                                                  setState(
-                                                                    () {},
-                                                                  );
-                                                                },
-                                                                child: Text(
-                                                                  'Yes, Cancel',
-                                                                  style: TextStyle(
+                                                      minute: int.parse(
+                                                        endTimeStr
+                                                            .split(':')[1]
+                                                            .replaceAll(
+                                                              RegExp(r'[^0-9]'),
+                                                              '',
+                                                            ),
+                                                      ),
+                                                    );
+                                                    bookingEndDateTime =
+                                                        DateTime(
+                                                          bookingDate.year,
+                                                          bookingDate.month,
+                                                          bookingDate.day,
+                                                          time.hour,
+                                                          time.minute,
+                                                        );
+                                                  } catch (_) {}
+                                                }
+                                                if (bookingEndDateTime !=
+                                                        null &&
+                                                    now.isBefore(
+                                                      bookingEndDateTime,
+                                                    )) {
+                                                  canCancel = true;
+                                                }
+                                              }
+                                            }
+                                            if (canCancel) {
+                                              if (booking.status == 'booked') {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return Dialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              20,
+                                                            ),
+                                                      ),
+                                                      elevation: 8,
+                                                      backgroundColor:
+                                                          Colors.white,
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(
+                                                          24,
+                                                        ),
+                                                        child: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .warning_amber_rounded,
+                                                              color:
+                                                                  AppColors
+                                                                      .error,
+                                                              size: 48,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 16,
+                                                            ),
+                                                            Text(
+                                                              'Cancel Booking?',
+                                                              style: AppTextStyles
+                                                                  .h2
+                                                                  .copyWith(
                                                                     color:
-                                                                        Colors
-                                                                            .white,
+                                                                        AppColors
+                                                                            .error,
                                                                     fontWeight:
                                                                         FontWeight
                                                                             .bold,
+                                                                    fontSize:
+                                                                        22,
                                                                   ),
-                                                                ),
-                                                              ),
-                                                              OutlinedButton(
-                                                                style: OutlinedButton.styleFrom(
-                                                                  side: BorderSide(
-                                                                    color:
-                                                                        AppColors
-                                                                            .primaryDark,
-                                                                    width: 2,
-                                                                  ),
-                                                                  shape: RoundedRectangleBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          12,
-                                                                        ),
-                                                                  ),
-                                                                  padding:
-                                                                      EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            24,
-                                                                        vertical:
-                                                                            12,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 12,
+                                                            ),
+                                                            Text(
+                                                              'Are you sure you want to cancel this booking? This action cannot be undone.',
+                                                              style:
+                                                                  AppTextStyles
+                                                                      .body2
+                                                                      .copyWith(
+                                                                        fontSize:
+                                                                            16,
                                                                       ),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 24,
+                                                            ),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                ElevatedButton(
+                                                                  style: ElevatedButton.styleFrom(
+                                                                    backgroundColor:
+                                                                        AppColors
+                                                                            .error,
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            12,
+                                                                          ),
+                                                                    ),
+                                                                    padding: EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          24,
+                                                                      vertical:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                  onPressed: () async {
+                                                                    await BookingService()
+                                                                        .updateBookingRequestStatus(
+                                                                          booking
+                                                                              .id,
+                                                                          'cancelled',
+                                                                        );
+                                                                    print(
+                                                                      'Calling notifyAdminOnCancellation for booked cancellation',
+                                                                    );
+                                                                    NotificationService.notifyAdminOnCancellation(
+                                                                      userName:
+                                                                          booking
+                                                                              .userName,
+                                                                      branch:
+                                                                          booking
+                                                                              .branch,
+                                                                      timeSlot:
+                                                                          booking
+                                                                              .timeSlot,
+                                                                      date:
+                                                                          booking
+                                                                              .date,
+                                                                    );
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop();
+                                                                    setState(
+                                                                      () {},
+                                                                    );
+                                                                  },
+                                                                  child: Text(
+                                                                    'Yes, Cancel',
+                                                                    style: TextStyle(
+                                                                      color:
+                                                                          Colors
+                                                                              .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ),
                                                                 ),
-                                                                onPressed:
-                                                                    () =>
-                                                                        Navigator.of(
-                                                                          context,
-                                                                        ).pop(),
-                                                                child: Text(
-                                                                  'No',
-                                                                  style: TextStyle(
+                                                                OutlinedButton(
+                                                                  style: OutlinedButton.styleFrom(
+                                                                    side: BorderSide(
+                                                                      color:
+                                                                          AppColors
+                                                                              .primaryDark,
+                                                                      width: 2,
+                                                                    ),
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            12,
+                                                                          ),
+                                                                    ),
+                                                                    padding: EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          24,
+                                                                      vertical:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                  onPressed:
+                                                                      () =>
+                                                                          Navigator.of(
+                                                                            context,
+                                                                          ).pop(),
+                                                                  child: Text(
+                                                                    'No',
+                                                                    style: TextStyle(
+                                                                      color:
+                                                                          AppColors
+                                                                              .primaryDark,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              } else if (booking.status ==
+                                                  'pending') {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return Dialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              20,
+                                                            ),
+                                                      ),
+                                                      elevation: 8,
+                                                      backgroundColor:
+                                                          Colors.white,
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(
+                                                          24,
+                                                        ),
+                                                        child: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .warning_amber_rounded,
+                                                              color:
+                                                                  AppColors
+                                                                      .error,
+                                                              size: 48,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 16,
+                                                            ),
+                                                            Text(
+                                                              'Cancel Booking Request?',
+                                                              style: AppTextStyles
+                                                                  .h2
+                                                                  .copyWith(
                                                                     color:
                                                                         AppColors
-                                                                            .primaryDark,
+                                                                            .error,
                                                                     fontWeight:
                                                                         FontWeight
                                                                             .bold,
+                                                                    fontSize:
+                                                                        22,
+                                                                  ),
+                                                            ),
+                                                            SizedBox(
+                                                              height: 12,
+                                                            ),
+                                                            Text(
+                                                              'Are you sure you want to cancel this booking request? This action cannot be undone.',
+                                                              style:
+                                                                  AppTextStyles
+                                                                      .body2
+                                                                      .copyWith(
+                                                                        fontSize:
+                                                                            16,
+                                                                      ),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 24,
+                                                            ),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                ElevatedButton(
+                                                                  style: ElevatedButton.styleFrom(
+                                                                    backgroundColor:
+                                                                        AppColors
+                                                                            .error,
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            12,
+                                                                          ),
+                                                                    ),
+                                                                    padding: EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          24,
+                                                                      vertical:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                  onPressed: () async {
+                                                                    await BookingService()
+                                                                        .updateBookingRequestStatus(
+                                                                          booking
+                                                                              .id,
+                                                                          'cancelled',
+                                                                        );
+                                                                    print(
+                                                                      'Calling notifyAdminOnCancellation for pending cancellation',
+                                                                    );
+                                                                    NotificationService.notifyAdminOnCancellation(
+                                                                      userName:
+                                                                          booking
+                                                                              .userName,
+                                                                      branch:
+                                                                          booking
+                                                                              .branch,
+                                                                      timeSlot:
+                                                                          booking
+                                                                              .timeSlot,
+                                                                      date:
+                                                                          booking
+                                                                              .date,
+                                                                    );
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop();
+                                                                    setState(
+                                                                      () {},
+                                                                    );
+                                                                  },
+                                                                  child: Text(
+                                                                    'Yes, Cancel',
+                                                                    style: TextStyle(
+                                                                      color:
+                                                                          Colors
+                                                                              .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
                                                                   ),
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
+                                                                OutlinedButton(
+                                                                  style: OutlinedButton.styleFrom(
+                                                                    side: BorderSide(
+                                                                      color:
+                                                                          AppColors
+                                                                              .primaryDark,
+                                                                      width: 2,
+                                                                    ),
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            12,
+                                                                          ),
+                                                                    ),
+                                                                    padding: EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          24,
+                                                                      vertical:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                                  onPressed:
+                                                                      () =>
+                                                                          Navigator.of(
+                                                                            context,
+                                                                          ).pop(),
+                                                                  child: Text(
+                                                                    'No',
+                                                                    style: TextStyle(
+                                                                      color:
+                                                                          AppColors
+                                                                              .primaryDark,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
-                                              );
+                                                    );
+                                                  },
+                                                );
+                                              }
                                             }
                                           }
                                           : null,

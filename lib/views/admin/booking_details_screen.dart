@@ -247,6 +247,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
     List<BookingRequest> bookings,
   ) {
     _popupController?.forward(from: 0);
+    // Filter bookings to only show those approved by admin (status == 'booked')
+    final approvedBookings =
+        bookings.where((b) => b.status == 'booked').toList();
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -265,152 +268,136 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen>
                 horizontal: 16.w,
                 vertical: 32.h,
               ),
-              backgroundColor: Colors.white.withOpacity(0.7),
+              backgroundColor: Colors.white.withOpacity(0.9),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24.r),
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryLight.withOpacity(0.2),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                  color: Colors.white.withOpacity(0.7),
-                  backgroundBlendMode: BlendMode.overlay,
-                ),
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(24.w),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(height: 32.h),
-                          Text(
-                            'Bookings for $user',
-                            style: AppTextStyles.h2.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryDark,
-                            ),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(24.w),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: 32.h),
+                        Text(
+                          'Bookings for $user',
+                          style: AppTextStyles.h2.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryDark,
                           ),
-                          SizedBox(height: 16.h),
-                          SizedBox(
-                            height: 400.h,
-                            child: ListView.builder(
-                              itemCount: bookings.length,
-                              itemBuilder: (context, index) {
-                                final booking = bookings[index];
-                                return Container(
-                                  margin: EdgeInsets.only(bottom: 16.h),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    color: Colors.white,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primaryLight
-                                            .withOpacity(0.08),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                        ),
+                        SizedBox(height: 16.h),
+                        SizedBox(
+                          height: 400.h,
+                          child: ListView.builder(
+                            itemCount: approvedBookings.length,
+                            itemBuilder: (context, index) {
+                              final booking = approvedBookings[index];
+                              return Container(
+                                margin: EdgeInsets.only(bottom: 16.h),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primaryLight.withOpacity(
+                                        0.08,
                                       ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 8.w,
-                                        height: 80.h,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(16.r),
-                                            bottomLeft: Radius.circular(16.r),
-                                          ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 8.w,
+                                      height: 80.h,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(16.r),
+                                          bottomLeft: Radius.circular(16.r),
                                         ),
                                       ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.all(16.w),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Icon(
-                                                Icons.meeting_room,
-                                                color: AppColors.primary,
-                                                size: 28.sp,
+                                    ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(16.w),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Icon(
+                                              Icons.meeting_room,
+                                              color: AppColors.primary,
+                                              size: 28.sp,
+                                            ),
+                                            SizedBox(width: 12.w),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Branch: ${booking.branch}',
+                                                    style: AppTextStyles.body1
+                                                        .copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                  ),
+                                                  Text(
+                                                    'Time Slot: ${booking.timeSlot}',
+                                                    style: AppTextStyles.body2,
+                                                  ),
+                                                  Text(
+                                                    'User: ${booking.userName}',
+                                                    style: AppTextStyles.body2,
+                                                  ),
+                                                  Text(
+                                                    'Day: ${booking.date}',
+                                                    style: AppTextStyles.body2,
+                                                  ),
+                                                ],
                                               ),
-                                              SizedBox(width: 12.w),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'Branch: ${booking.branch}',
-                                                      style: AppTextStyles.body1
-                                                          .copyWith(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                    ),
-                                                    Text(
-                                                      'Time Slot: ${booking.timeSlot}',
-                                                      style:
-                                                          AppTextStyles.body2,
-                                                    ),
-                                                    Text(
-                                                      'User: ${booking.userName}',
-                                                      style:
-                                                          AppTextStyles.body2,
-                                                    ),
-                                                    Text(
-                                                      'Day: ${booking.date}',
-                                                      style:
-                                                          AppTextStyles.body2,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(color: Colors.black12, blurRadius: 4),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 28,
-                            color: Colors.black,
-                          ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 4),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 28,
+                          color: Colors.black,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
