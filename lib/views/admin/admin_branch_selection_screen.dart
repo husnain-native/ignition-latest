@@ -41,6 +41,8 @@ class AdminBranchSelectionScreen extends StatelessWidget {
                       child: Image.asset(
                         'assets/icons/ignition.jpeg',
                         fit: BoxFit.contain,
+                        
+
                       ),
                     ),
                   ),

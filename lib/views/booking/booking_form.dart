@@ -129,6 +129,113 @@ class _BookingFormState extends State<BookingForm> {
     final allBookings = await BookingService().getUserBookingRequests(
       userId ?? '',
     );
+    // Check for future bookings (pending or booked)
+    final now = DateTime.now();
+    int futureBookingCount =
+        allBookings.where((b) {
+          if (b.status != 'pending' && b.status != 'booked') return false;
+          final bookingDate = DateTime.tryParse(b.date);
+          if (bookingDate != null && b.timeSlot.contains('-')) {
+            String endTimeStr = b.timeSlot.split('-').last.trim();
+            DateTime? bookingEndDateTime;
+            try {
+              bookingEndDateTime = DateTime.parse(
+                '${b.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+              );
+            } catch (_) {
+              try {
+                final time = TimeOfDay(
+                  hour: int.parse(endTimeStr.split(':')[0]),
+                  minute: int.parse(
+                    endTimeStr.split(':')[1].replaceAll(RegExp(r'[^0-9]'), ''),
+                  ),
+                );
+                bookingEndDateTime = DateTime(
+                  bookingDate.year,
+                  bookingDate.month,
+                  bookingDate.day,
+                  time.hour,
+                  time.minute,
+                );
+              } catch (_) {}
+            }
+            if (bookingEndDateTime != null) {
+              return bookingEndDateTime.isAfter(now);
+            }
+          }
+          return false;
+        }).length;
+    if (futureBookingCount >= 5) {
+      setState(() {
+        isLoading = false;
+      });
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder:
+            (context) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 32.h, horizontal: 24.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64.sp,
+                      color: AppColors.error,
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      'Future Booking Limit Reached',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      'You cannot have more than 5 future bookings. Please wait for a slot to pass or cancel an existing booking to book a new one.',
+                      style: AppTextStyles.body1.copyWith(
+                        color: Colors.black87,
+                        fontSize: 16.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.info,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'OK',
+                          style: AppTextStyles.h3.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
+      return;
+    }
     final todaysBookings =
         allBookings
             .where(

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/workspace_item_model.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
-import '../../constants/app_constants.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../models/space_model.dart';
 import '../booking/booking_screen.dart';
 import '../booking/booking_form.dart';
 

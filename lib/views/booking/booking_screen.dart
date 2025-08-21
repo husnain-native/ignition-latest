@@ -31,6 +31,159 @@ class _BookingScreenState extends State<BookingScreen> {
     setState(() {});
   }
 
+  Future<void> _showCancelDialog(BookingRequest booking) async {
+    final bookingDate = DateTime.tryParse(booking.date);
+    final now = DateTime.now();
+    bool canCancel = false;
+
+    if (bookingDate != null) {
+      final today = DateTime(now.year, now.month, now.day);
+      if (bookingDate.isAfter(today)) {
+        canCancel = true;
+      } else if (bookingDate.isAtSameMomentAs(today)) {
+        String endTimeStr = '';
+        if (booking.timeSlot.contains('-')) {
+          endTimeStr = booking.timeSlot.split('-').last.trim();
+        }
+        DateTime? bookingEndDateTime;
+        try {
+          bookingEndDateTime = DateTime.parse(
+            '${booking.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+          );
+        } catch (_) {
+          try {
+            final time = TimeOfDay(
+              hour: int.parse(endTimeStr.split(':')[0]),
+              minute: int.parse(
+                endTimeStr.split(':')[1].replaceAll(RegExp(r'[^0-9]'), ''),
+              ),
+            );
+            bookingEndDateTime = DateTime(
+              bookingDate.year,
+              bookingDate.month,
+              bookingDate.day,
+              time.hour,
+              time.minute,
+            );
+          } catch (_) {}
+        }
+        if (bookingEndDateTime != null && now.isBefore(bookingEndDateTime)) {
+          canCancel = true;
+        }
+      }
+    }
+
+    if (!canCancel) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 8,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.error,
+                  size: 48,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  booking.status == 'booked'
+                      ? 'Cancel Booking?'
+                      : 'Cancel Booking Request?',
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  booking.status == 'booked'
+                      ? 'Are you sure you want to cancel this booking? This action cannot be undone.'
+                      : 'Are you sure you want to cancel this booking request? This action cannot be undone.',
+                  style: AppTextStyles.body2.copyWith(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      onPressed: () async {
+                        await BookingService().updateBookingRequestStatus(
+                          booking.id,
+                          'cancelled',
+                        );
+                        print('Calling notifyAdminOnCancellation');
+                        NotificationService.notifyAdminOnCancellation(
+                          userName: booking.userName,
+                          branch: booking.branch,
+                          timeSlot: booking.timeSlot,
+                          date: booking.date,
+                        );
+                        Navigator.of(context).pop();
+                        setState(() {});
+                      },
+                      child: Text(
+                        'Yes, Cancel',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: AppColors.primaryDark,
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        'No',
+                        style: TextStyle(
+                          color: AppColors.primaryDark,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -209,18 +362,275 @@ class _BookingScreenState extends State<BookingScreen> {
                           }
                           final bookings = snapshot.data!;
                           final now = DateTime.now();
+                          // Filter out bookings where slot end time is more than a week in the past
+                          final filteredBookings =
+                              bookings.where((booking) {
+                                final bookingDate = DateTime.tryParse(
+                                  booking.date,
+                                );
+                                if (bookingDate != null &&
+                                    booking.timeSlot.contains('-')) {
+                                  String endTimeStr =
+                                      booking.timeSlot.split('-').last.trim();
+                                  DateTime? bookingEndDateTime;
+                                  try {
+                                    bookingEndDateTime = DateTime.parse(
+                                      '${booking.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                    );
+                                  } catch (_) {
+                                    try {
+                                      final time = TimeOfDay(
+                                        hour: int.parse(
+                                          endTimeStr.split(':')[0],
+                                        ),
+                                        minute: int.parse(
+                                          endTimeStr
+                                              .split(':')[1]
+                                              .replaceAll(
+                                                RegExp(r'[^0-9]'),
+                                                '',
+                                              ),
+                                        ),
+                                      );
+                                      bookingEndDateTime = DateTime(
+                                        bookingDate.year,
+                                        bookingDate.month,
+                                        bookingDate.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                    } catch (_) {}
+                                  }
+                                  if (bookingEndDateTime != null) {
+                                    return bookingEndDateTime.isAfter(
+                                      now.subtract(Duration(days: 7)),
+                                    );
+                                  }
+                                }
+                                return true; // If can't parse, keep it
+                              }).toList();
                           List<BookingRequest> sortedBookings = [];
                           if (_selectedFilter == 'all') {
-                            sortedBookings = List.from(bookings)..sort((a, b) {
-                              if (a.createdAt != null && b.createdAt != null) {
-                                return b.createdAt!.compareTo(a.createdAt!);
-                              } else {
-                                return b.id.compareTo(a.id);
+                            // Split into future and past bookings
+                            final futureBookings =
+                                filteredBookings.where((b) {
+                                  final bDate = DateTime.tryParse(b.date);
+                                  if (bDate == null) return false;
+                                  // Use slot end time if possible
+                                  if (b.timeSlot.contains('-')) {
+                                    String endTimeStr =
+                                        b.timeSlot.split('-').last.trim();
+                                    DateTime? bookingEndDateTime;
+                                    try {
+                                      bookingEndDateTime = DateTime.parse(
+                                        '${b.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                      );
+                                    } catch (_) {
+                                      try {
+                                        final time = TimeOfDay(
+                                          hour: int.parse(
+                                            endTimeStr.split(':')[0],
+                                          ),
+                                          minute: int.parse(
+                                            endTimeStr
+                                                .split(':')[1]
+                                                .replaceAll(
+                                                  RegExp(r'[^0-9]'),
+                                                  '',
+                                                ),
+                                          ),
+                                        );
+                                        bookingEndDateTime = DateTime(
+                                          bDate.year,
+                                          bDate.month,
+                                          bDate.day,
+                                          time.hour,
+                                          time.minute,
+                                        );
+                                      } catch (_) {}
+                                    }
+                                    if (bookingEndDateTime != null) {
+                                      return bookingEndDateTime.isAfter(now);
+                                    }
+                                  }
+                                  return bDate.isAfter(now);
+                                }).toList();
+                            final pastBookings =
+                                filteredBookings.where((b) {
+                                  final bDate = DateTime.tryParse(b.date);
+                                  if (bDate == null) return false;
+                                  if (b.timeSlot.contains('-')) {
+                                    String endTimeStr =
+                                        b.timeSlot.split('-').last.trim();
+                                    DateTime? bookingEndDateTime;
+                                    try {
+                                      bookingEndDateTime = DateTime.parse(
+                                        '${b.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                      );
+                                    } catch (_) {
+                                      try {
+                                        final time = TimeOfDay(
+                                          hour: int.parse(
+                                            endTimeStr.split(':')[0],
+                                          ),
+                                          minute: int.parse(
+                                            endTimeStr
+                                                .split(':')[1]
+                                                .replaceAll(
+                                                  RegExp(r'[^0-9]'),
+                                                  '',
+                                                ),
+                                          ),
+                                        );
+                                        bookingEndDateTime = DateTime(
+                                          bDate.year,
+                                          bDate.month,
+                                          bDate.day,
+                                          time.hour,
+                                          time.minute,
+                                        );
+                                      } catch (_) {}
+                                    }
+                                    if (bookingEndDateTime != null) {
+                                      return bookingEndDateTime.isBefore(now);
+                                    }
+                                  }
+                                  return bDate.isBefore(now);
+                                }).toList();
+                            // Sort future bookings: soonest first
+                            futureBookings.sort((a, b) {
+                              final aDate = DateTime.tryParse(a.date) ?? now;
+                              final bDate = DateTime.tryParse(b.date) ?? now;
+                              // Use slot end time if possible
+                              DateTime aEnd = aDate;
+                              DateTime bEnd = bDate;
+                              if (a.timeSlot.contains('-')) {
+                                String endTimeStr =
+                                    a.timeSlot.split('-').last.trim();
+                                try {
+                                  aEnd = DateTime.parse(
+                                    '${a.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                  );
+                                } catch (_) {
+                                  try {
+                                    final time = TimeOfDay(
+                                      hour: int.parse(endTimeStr.split(':')[0]),
+                                      minute: int.parse(
+                                        endTimeStr
+                                            .split(':')[1]
+                                            .replaceAll(RegExp(r'[^0-9]'), ''),
+                                      ),
+                                    );
+                                    aEnd = DateTime(
+                                      aDate.year,
+                                      aDate.month,
+                                      aDate.day,
+                                      time.hour,
+                                      time.minute,
+                                    );
+                                  } catch (_) {}
+                                }
                               }
+                              if (b.timeSlot.contains('-')) {
+                                String endTimeStr =
+                                    b.timeSlot.split('-').last.trim();
+                                try {
+                                  bEnd = DateTime.parse(
+                                    '${b.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                  );
+                                } catch (_) {
+                                  try {
+                                    final time = TimeOfDay(
+                                      hour: int.parse(endTimeStr.split(':')[0]),
+                                      minute: int.parse(
+                                        endTimeStr
+                                            .split(':')[1]
+                                            .replaceAll(RegExp(r'[^0-9]'), ''),
+                                      ),
+                                    );
+                                    bEnd = DateTime(
+                                      bDate.year,
+                                      bDate.month,
+                                      bDate.day,
+                                      time.hour,
+                                      time.minute,
+                                    );
+                                  } catch (_) {}
+                                }
+                              }
+                              return aEnd.compareTo(bEnd);
                             });
+                            // Sort past bookings: most recent past first
+                            pastBookings.sort((a, b) {
+                              final aDate = DateTime.tryParse(a.date) ?? now;
+                              final bDate = DateTime.tryParse(b.date) ?? now;
+                              DateTime aEnd = aDate;
+                              DateTime bEnd = bDate;
+                              if (a.timeSlot.contains('-')) {
+                                String endTimeStr =
+                                    a.timeSlot.split('-').last.trim();
+                                try {
+                                  aEnd = DateTime.parse(
+                                    '${a.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                  );
+                                } catch (_) {
+                                  try {
+                                    final time = TimeOfDay(
+                                      hour: int.parse(endTimeStr.split(':')[0]),
+                                      minute: int.parse(
+                                        endTimeStr
+                                            .split(':')[1]
+                                            .replaceAll(RegExp(r'[^0-9]'), ''),
+                                      ),
+                                    );
+                                    aEnd = DateTime(
+                                      aDate.year,
+                                      aDate.month,
+                                      aDate.day,
+                                      time.hour,
+                                      time.minute,
+                                    );
+                                  } catch (_) {}
+                                }
+                              }
+                              if (b.timeSlot.contains('-')) {
+                                String endTimeStr =
+                                    b.timeSlot.split('-').last.trim();
+                                try {
+                                  bEnd = DateTime.parse(
+                                    '${b.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                  );
+                                } catch (_) {
+                                  try {
+                                    final time = TimeOfDay(
+                                      hour: int.parse(endTimeStr.split(':')[0]),
+                                      minute: int.parse(
+                                        endTimeStr
+                                            .split(':')[1]
+                                            .replaceAll(RegExp(r'[^0-9]'), ''),
+                                      ),
+                                    );
+                                    bEnd = DateTime(
+                                      bDate.year,
+                                      bDate.month,
+                                      bDate.day,
+                                      time.hour,
+                                      time.minute,
+                                    );
+                                  } catch (_) {}
+                                }
+                              }
+                              return bEnd.compareTo(
+                                aEnd,
+                              ); // Most recent past first
+                            });
+                            sortedBookings = [
+                              ...futureBookings,
+                              ...pastBookings,
+                            ];
                           } else if (_selectedFilter == 'closest_to_today') {
                             sortedBookings =
-                                bookings.where((b) {
+                                filteredBookings.where((b) {
                                   final bDate = DateTime.tryParse(b.date);
                                   return bDate != null && bDate.isAfter(now);
                                 }).toList();
@@ -233,22 +643,22 @@ class _BookingScreenState extends State<BookingScreen> {
                             });
                           } else if (_selectedFilter == 'booked') {
                             sortedBookings =
-                                bookings
+                                filteredBookings
                                     .where((b) => b.status == 'booked')
                                     .toList();
                           } else if (_selectedFilter == 'pending') {
                             sortedBookings =
-                                bookings
+                                filteredBookings
                                     .where((b) => b.status == 'pending')
                                     .toList();
                           } else if (_selectedFilter == 'cancelled') {
                             sortedBookings =
-                                bookings
+                                filteredBookings
                                     .where((b) => b.status == 'cancelled')
                                     .toList();
                           } else if (_selectedFilter == 'rejected') {
                             sortedBookings =
-                                bookings
+                                filteredBookings
                                     .where((b) => b.status == 'rejected')
                                     .toList();
                           }
@@ -273,6 +683,53 @@ class _BookingScreenState extends State<BookingScreen> {
                             itemCount: sortedBookings.length,
                             itemBuilder: (context, index) {
                               final booking = sortedBookings[index];
+                              // Calculate if Cancel button should be shown
+                              final now = DateTime.now();
+                              bool canShowCancel = false;
+                              if (booking.status == 'pending' ||
+                                  booking.status == 'booked') {
+                                final bookingDate = DateTime.tryParse(
+                                  booking.date,
+                                );
+                                if (bookingDate != null &&
+                                    booking.timeSlot.contains('-')) {
+                                  String endTimeStr =
+                                      booking.timeSlot.split('-').last.trim();
+                                  DateTime? bookingEndDateTime;
+                                  try {
+                                    bookingEndDateTime = DateTime.parse(
+                                      '${booking.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
+                                    );
+                                  } catch (_) {
+                                    try {
+                                      final time = TimeOfDay(
+                                        hour: int.parse(
+                                          endTimeStr.split(':')[0],
+                                        ),
+                                        minute: int.parse(
+                                          endTimeStr
+                                              .split(':')[1]
+                                              .replaceAll(
+                                                RegExp(r'[^0-9]'),
+                                                '',
+                                              ),
+                                        ),
+                                      );
+                                      bookingEndDateTime = DateTime(
+                                        bookingDate.year,
+                                        bookingDate.month,
+                                        bookingDate.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                    } catch (_) {}
+                                  }
+                                  if (bookingEndDateTime != null &&
+                                      now.isBefore(bookingEndDateTime)) {
+                                    canShowCancel = true;
+                                  }
+                                }
+                              }
                               return Card(
                                 elevation: 2,
                                 shape: RoundedRectangleBorder(
@@ -284,606 +741,201 @@ class _BookingScreenState extends State<BookingScreen> {
                                 ),
                                 color: AppColors.booked,
                                 margin: EdgeInsets.only(bottom: 20.h),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
-                                  onTap:
-                                      booking.status == 'booked' ||
-                                              booking.status == 'pending'
-                                          ? () async {
-                                            final bookingDate =
-                                                DateTime.tryParse(booking.date);
-                                            final now = DateTime.now();
-                                            bool canCancel = false;
-                                            if (bookingDate != null) {
-                                              final today = DateTime(
-                                                now.year,
-                                                now.month,
-                                                now.day,
-                                              );
-                                              if (bookingDate.isAfter(today)) {
-                                                // Future date, can cancel
-                                                canCancel = true;
-                                              } else if (bookingDate
-                                                  .isAtSameMomentAs(today)) {
-                                                // Today: check time
-                                                // Try to parse the end time from booking.timeSlot
-                                                String endTimeStr = '';
-                                                if (booking.timeSlot.contains(
-                                                  '-',
-                                                )) {
-                                                  endTimeStr =
-                                                      booking.timeSlot
-                                                          .split('-')
-                                                          .last
-                                                          .trim();
-                                                }
-                                                DateTime? bookingEndDateTime;
-                                                try {
-                                                  // Try parsing as 24h (e.g., '14:00')
-                                                  bookingEndDateTime =
-                                                      DateTime.parse(
-                                                        '${booking.date}T${endTimeStr.length <= 5 ? endTimeStr : endTimeStr.substring(0, 5)}:00',
-                                                      );
-                                                } catch (_) {
-                                                  // Try parsing as 12h (e.g., '2:00 PM')
-                                                  try {
-                                                    final time = TimeOfDay(
-                                                      hour: int.parse(
-                                                        endTimeStr.split(
-                                                          ':',
-                                                        )[0],
-                                                      ),
-                                                      minute: int.parse(
-                                                        endTimeStr
-                                                            .split(':')[1]
-                                                            .replaceAll(
-                                                              RegExp(r'[^0-9]'),
-                                                              '',
-                                                            ),
-                                                      ),
-                                                    );
-                                                    bookingEndDateTime =
-                                                        DateTime(
-                                                          bookingDate.year,
-                                                          bookingDate.month,
-                                                          bookingDate.day,
-                                                          time.hour,
-                                                          time.minute,
-                                                        );
-                                                  } catch (_) {}
-                                                }
-                                                if (bookingEndDateTime !=
-                                                        null &&
-                                                    now.isBefore(
-                                                      bookingEndDateTime,
-                                                    )) {
-                                                  canCancel = true;
-                                                }
-                                              }
-                                            }
-                                            if (canCancel) {
-                                              if (booking.status == 'booked') {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return Dialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              20,
-                                                            ),
-                                                      ),
-                                                      elevation: 8,
-                                                      backgroundColor:
-                                                          Colors.white,
-                                                      child: Padding(
-                                                        padding: EdgeInsets.all(
-                                                          24,
-                                                        ),
-                                                        child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .warning_amber_rounded,
-                                                              color:
-                                                                  AppColors
-                                                                      .error,
-                                                              size: 48,
-                                                            ),
-                                                            SizedBox(
-                                                              height: 16,
-                                                            ),
-                                                            Text(
-                                                              'Cancel Booking?',
-                                                              style: AppTextStyles
-                                                                  .h2
-                                                                  .copyWith(
-                                                                    color:
-                                                                        AppColors
-                                                                            .error,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        22,
-                                                                  ),
-                                                            ),
-                                                            SizedBox(
-                                                              height: 12,
-                                                            ),
-                                                            Text(
-                                                              'Are you sure you want to cancel this booking? This action cannot be undone.',
-                                                              style:
-                                                                  AppTextStyles
-                                                                      .body2
-                                                                      .copyWith(
-                                                                        fontSize:
-                                                                            16,
-                                                                      ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                            ),
-                                                            SizedBox(
-                                                              height: 24,
-                                                            ),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceEvenly,
-                                                              children: [
-                                                                ElevatedButton(
-                                                                  style: ElevatedButton.styleFrom(
-                                                                    backgroundColor:
-                                                                        AppColors
-                                                                            .error,
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                            12,
-                                                                          ),
-                                                                    ),
-                                                                    padding: EdgeInsets.symmetric(
-                                                                      horizontal:
-                                                                          24,
-                                                                      vertical:
-                                                                          12,
-                                                                    ),
-                                                                  ),
-                                                                  onPressed: () async {
-                                                                    await BookingService()
-                                                                        .updateBookingRequestStatus(
-                                                                          booking
-                                                                              .id,
-                                                                          'cancelled',
-                                                                        );
-                                                                    print(
-                                                                      'Calling notifyAdminOnCancellation for booked cancellation',
-                                                                    );
-                                                                    NotificationService.notifyAdminOnCancellation(
-                                                                      userName:
-                                                                          booking
-                                                                              .userName,
-                                                                      branch:
-                                                                          booking
-                                                                              .branch,
-                                                                      timeSlot:
-                                                                          booking
-                                                                              .timeSlot,
-                                                                      date:
-                                                                          booking
-                                                                              .date,
-                                                                    );
-                                                                    Navigator.of(
-                                                                      context,
-                                                                    ).pop();
-                                                                    setState(
-                                                                      () {},
-                                                                    );
-                                                                  },
-                                                                  child: Text(
-                                                                    'Yes, Cancel',
-                                                                    style: TextStyle(
-                                                                      color:
-                                                                          Colors
-                                                                              .white,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                OutlinedButton(
-                                                                  style: OutlinedButton.styleFrom(
-                                                                    side: BorderSide(
-                                                                      color:
-                                                                          AppColors
-                                                                              .primaryDark,
-                                                                      width: 2,
-                                                                    ),
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                            12,
-                                                                          ),
-                                                                    ),
-                                                                    padding: EdgeInsets.symmetric(
-                                                                      horizontal:
-                                                                          24,
-                                                                      vertical:
-                                                                          12,
-                                                                    ),
-                                                                  ),
-                                                                  onPressed:
-                                                                      () =>
-                                                                          Navigator.of(
-                                                                            context,
-                                                                          ).pop(),
-                                                                  child: Text(
-                                                                    'No',
-                                                                    style: TextStyle(
-                                                                      color:
-                                                                          AppColors
-                                                                              .primaryDark,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              } else if (booking.status ==
-                                                  'pending') {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return Dialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              20,
-                                                            ),
-                                                      ),
-                                                      elevation: 8,
-                                                      backgroundColor:
-                                                          Colors.white,
-                                                      child: Padding(
-                                                        padding: EdgeInsets.all(
-                                                          24,
-                                                        ),
-                                                        child: Column(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .warning_amber_rounded,
-                                                              color:
-                                                                  AppColors
-                                                                      .error,
-                                                              size: 48,
-                                                            ),
-                                                            SizedBox(
-                                                              height: 16,
-                                                            ),
-                                                            Text(
-                                                              'Cancel Booking Request?',
-                                                              style: AppTextStyles
-                                                                  .h2
-                                                                  .copyWith(
-                                                                    color:
-                                                                        AppColors
-                                                                            .error,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        22,
-                                                                  ),
-                                                            ),
-                                                            SizedBox(
-                                                              height: 12,
-                                                            ),
-                                                            Text(
-                                                              'Are you sure you want to cancel this booking request? This action cannot be undone.',
-                                                              style:
-                                                                  AppTextStyles
-                                                                      .body2
-                                                                      .copyWith(
-                                                                        fontSize:
-                                                                            16,
-                                                                      ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                            ),
-                                                            SizedBox(
-                                                              height: 24,
-                                                            ),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceEvenly,
-                                                              children: [
-                                                                ElevatedButton(
-                                                                  style: ElevatedButton.styleFrom(
-                                                                    backgroundColor:
-                                                                        AppColors
-                                                                            .error,
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                            12,
-                                                                          ),
-                                                                    ),
-                                                                    padding: EdgeInsets.symmetric(
-                                                                      horizontal:
-                                                                          24,
-                                                                      vertical:
-                                                                          12,
-                                                                    ),
-                                                                  ),
-                                                                  onPressed: () async {
-                                                                    await BookingService()
-                                                                        .updateBookingRequestStatus(
-                                                                          booking
-                                                                              .id,
-                                                                          'cancelled',
-                                                                        );
-                                                                    print(
-                                                                      'Calling notifyAdminOnCancellation for pending cancellation',
-                                                                    );
-                                                                    NotificationService.notifyAdminOnCancellation(
-                                                                      userName:
-                                                                          booking
-                                                                              .userName,
-                                                                      branch:
-                                                                          booking
-                                                                              .branch,
-                                                                      timeSlot:
-                                                                          booking
-                                                                              .timeSlot,
-                                                                      date:
-                                                                          booking
-                                                                              .date,
-                                                                    );
-                                                                    Navigator.of(
-                                                                      context,
-                                                                    ).pop();
-                                                                    setState(
-                                                                      () {},
-                                                                    );
-                                                                  },
-                                                                  child: Text(
-                                                                    'Yes, Cancel',
-                                                                    style: TextStyle(
-                                                                      color:
-                                                                          Colors
-                                                                              .white,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                OutlinedButton(
-                                                                  style: OutlinedButton.styleFrom(
-                                                                    side: BorderSide(
-                                                                      color:
-                                                                          AppColors
-                                                                              .primaryDark,
-                                                                      width: 2,
-                                                                    ),
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                            12,
-                                                                          ),
-                                                                    ),
-                                                                    padding: EdgeInsets.symmetric(
-                                                                      horizontal:
-                                                                          24,
-                                                                      vertical:
-                                                                          12,
-                                                                    ),
-                                                                  ),
-                                                                  onPressed:
-                                                                      () =>
-                                                                          Navigator.of(
-                                                                            context,
-                                                                          ).pop(),
-                                                                  child: Text(
-                                                                    'No',
-                                                                    style: TextStyle(
-                                                                      color:
-                                                                          AppColors
-                                                                              .primaryDark,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              }
-                                            }
-                                          }
-                                          : null,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(18),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.meeting_room,
-                                              color: AppColors.info,
-                                              size: 28,
-                                            ),
-                                            SizedBox(width: 10),
-                                            Expanded(
-                                              child: Text(
-                                                booking.branch,
-                                                style: AppTextStyles.h2
-                                                    .copyWith(
-                                                      color: AppColors.info,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 20,
-                                                    ),
+                                child: Padding(
+                                  padding: EdgeInsets.fromLTRB(18, 18, 18, 10),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.meeting_room,
+                                            color: AppColors.info,
+                                            size: 28,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              booking.branch,
+                                              style: AppTextStyles.h2.copyWith(
+                                                color: AppColors.info,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 20,
                                               ),
                                             ),
-                                            Container(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 5,
-                                                vertical: 3,
-                                              ),
-                                              decoration: BoxDecoration(
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 5,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  booking.status == 'pending'
+                                                      ? Colors.orange.shade100
+                                                      : booking.status ==
+                                                          'booked'
+                                                      ? AppColors.success
+                                                          .withOpacity(0.15)
+                                                      : Colors.red.shade100,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              booking.status == 'booked'
+                                                  ? 'BOOKED'
+                                                  : booking.status == 'pending'
+                                                  ? 'PENDING'
+                                                  : booking.status
+                                                      .toUpperCase(),
+                                              style: TextStyle(
                                                 color:
                                                     booking.status == 'pending'
-                                                        ? Colors.orange.shade100
+                                                        ? Colors.orange
                                                         : booking.status ==
                                                             'booked'
                                                         ? AppColors.success
-                                                            .withOpacity(0.15)
-                                                        : Colors.red.shade100,
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
+                                                        : Colors.red,
+                                                fontWeight: FontWeight.bold,
                                               ),
-                                              child: Text(
-                                                booking.status == 'booked'
-                                                    ? 'BOOKED'
-                                                    : booking.status ==
-                                                        'pending'
-                                                    ? 'PENDING'
-                                                    : booking.status
-                                                        .toUpperCase(),
-                                                style: TextStyle(
-                                                  color:
-                                                      booking.status ==
-                                                              'pending'
-                                                          ? Colors.orange
-                                                          : booking.status ==
-                                                              'booked'
-                                                          ? AppColors.success
-                                                          : Colors.red,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+                                      // Date row styled
+                                      Container(
+                                        margin: EdgeInsets.symmetric(
+                                          vertical: 4,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.booked,
+                                          borderRadius: BorderRadius.circular(
+                                            0,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.secondaryDark,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.calendar_today_outlined,
+                                              color: AppColors.info,
+                                              size: 22,
+                                            ),
+                                            SizedBox(width: 12),
+                                            Text(
+                                              'Date',
+                                              style: TextStyle(
+                                                color: AppColors.info,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            Spacer(),
+                                            Text(
+                                              booking.date,
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 16,
                                               ),
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 8),
-                                        // Date row styled
-                                        Container(
-                                          margin: EdgeInsets.symmetric(
-                                            vertical: 4,
+                                      ),
+                                      // Time row styled
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.booked,
+                                          borderRadius: BorderRadius.circular(
+                                            0,
                                           ),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 10,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.booked,
-                                            borderRadius: BorderRadius.circular(
-                                              0,
-                                            ),
-                                            border: Border.all(
-                                              color: AppColors.secondaryDark,
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.calendar_today_outlined,
-                                                color: AppColors.info,
-                                                size: 22,
-                                              ),
-                                              SizedBox(width: 12),
-                                              Text(
-                                                'Date',
-                                                style: TextStyle(
-                                                  color: AppColors.info,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                              Spacer(),
-                                              Text(
-                                                booking.date,
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ],
+                                          border: Border.all(
+                                            color: AppColors.secondaryDark,
+                                            width: 2,
                                           ),
                                         ),
-                                        // Time row styled
-                                        Container(
-                                          // margin: EdgeInsets.symmetric(vertical: 0),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 10,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.booked,
-                                            borderRadius: BorderRadius.circular(
-                                              0,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.access_time,
+                                              color: AppColors.info,
+                                              size: 22,
                                             ),
-                                            border: Border.all(
-                                              color: AppColors.secondaryDark,
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.access_time,
+                                            SizedBox(width: 12),
+                                            Text(
+                                              'Time',
+                                              style: TextStyle(
                                                 color: AppColors.info,
-                                                size: 22,
+                                                fontSize: 16,
                                               ),
-                                              SizedBox(width: 12),
-                                              Text(
-                                                'Time',
+                                            ),
+                                            Spacer(),
+                                            Text(
+                                              booking.timeSlot,
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Add Cancel button only for pending or booked status and if slot end time is in the future
+                                      if (canShowCancel)
+                                        Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: Container(
+                                            margin: EdgeInsets.only(top: 4),
+                                            child: TextButton(
+                                              style: TextButton.styleFrom(
+                                                backgroundColor:
+                                                    const Color.fromARGB(
+                                                      255,
+                                                      161,
+                                                      24,
+                                                      6,
+                                                    ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 4,
+                                                ),
+                                                minimumSize: Size(0, 0),
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                              ),
+                                              onPressed:
+                                                  () => _showCancelDialog(
+                                                    booking,
+                                                  ),
+                                              child: Text(
+                                                'Cancel?',
                                                 style: TextStyle(
-                                                  color: AppColors.info,
-                                                  fontSize: 16,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              Spacer(),
-                                              Text(
-                                                booking.timeSlot,
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 ),
                               );
